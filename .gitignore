@@ -1,0 +1,10 @@
+# accounts + progress = private data, never commit
+users.json
+users.json.tmp
+progress.json
+
+# scratch file the terminal game writes your answers into
+work.py
+
+__pycache__/
+*.pyc
