@@ -8,3 +8,17 @@ work.py
 
 __pycache__/
 *.pyc
+
+# AI key stays on this machine only
+claude_key.txt
+
+# installed agent skills, not part of the project
+.agents/
+
+# scratch file the File handling topic writes
+note.txt
+data.txt
+
+# installed agent skills, not part of the project
+.claude/
+skills-lock.json

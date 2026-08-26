@@ -3,428 +3,1041 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Python Quest</title>
+<title>Python Sikhlo</title>
+<meta name="description" content="Python zero se seekho. Har topic pehle sikhata hai, fir alag sawaal ka test leta hai. Code browser me hi chalta hai, aur ek dost hamesha madad ke liye hai.">
+<meta name="theme-color" content="#0d1017">
+<!-- DEPLOY STEP: patch these two with the live URL before zipping -->
+<meta property="og:title" content="Python Sikhlo">
+<meta property="og:description" content="Python zero se seekho, apne dost ke saath.">
+<meta property="og:url" content="http://localhost:8777/">
+<meta property="og:image" content="http://localhost:8777/assets/og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d1017'/%3E%3Cpath d='M7 10l5 6-5 6' stroke='%237ee787' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M16 22h9' stroke='%23ffd45e' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #11131a; --panel: #181b24; --line: #262b38; --ink: #dfe3ee;
-    --dim: #8a93a8; --acc: #ffd45e; --ok: #59d99a; --bad: #ff7a7a;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--ink);
-    font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
-  }
-  header {
-    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-    padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--panel);
-  }
-  h1 { font-size: 17px; margin: 0; letter-spacing: .3px; }
-  h1 span { color: var(--acc); }
-  progress { flex: 1; min-width: 140px; height: 8px; accent-color: var(--ok); }
-  #score { color: var(--dim); font-size: 13px; white-space: nowrap; }
-  main { display: flex; align-items: flex-start; gap: 20px; padding: 20px; max-width: 1100px; margin: 0 auto; }
-  nav {
-    width: 230px; flex: none; background: var(--panel); border: 1px solid var(--line);
-    border-radius: 10px; padding: 6px; max-height: 78vh; overflow-y: auto;
-  }
-  nav button {
-    display: block; width: 100%; text-align: left; background: none; border: 0;
-    color: var(--dim); font: inherit; font-size: 13px; padding: 6px 9px;
-    border-radius: 6px; cursor: pointer;
-  }
-  nav button:hover { background: #212636; color: var(--ink); }
-  nav button.on { background: #2a3145; color: var(--ink); }
-  nav button.done { color: var(--ok); }
-  section { flex: 1; min-width: 0; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
-  .card + .card { margin-top: 14px; }
-  .card h2 { margin: 0 0 6px; font-size: 16px; }
-  .card p { margin: 0; color: var(--dim); }
-  .tag { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--acc); }
-  pre, textarea {
-    font: 13.5px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace;
-    background: #0d0f16; border: 1px solid var(--line); border-radius: 10px;
-    padding: 12px; white-space: pre-wrap;
-  }
-  pre { margin: 12px 0 0; min-height: 40px; }
-  pre.ok { color: var(--ok); border-color: #2d5c47; }
-  pre.bad { color: var(--bad); border-color: #5c2d2d; }
-  textarea { width: 100%; height: 280px; margin-top: 14px; resize: vertical; color: var(--ink); tab-size: 4; }
-  textarea:focus { outline: 1px solid var(--acc); }
-  .row { display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
-  button.act {
-    background: var(--acc); color: #191919; border: 0; border-radius: 8px;
-    padding: 9px 16px; font: inherit; font-weight: 600; cursor: pointer;
-  }
-  button.act.ghost { background: none; color: var(--dim); border: 1px solid var(--line); font-weight: 400; }
-  button.act:disabled { opacity: .5; cursor: progress; }
-  .hint { color: var(--dim); font-size: 12px; margin-left: auto; }
-  .hidden { display: none !important; }
-  /* full-screen steps: login, then track pick */
-  .gate {
-    position: fixed; inset: 0; z-index: 9; background: var(--bg);
-    display: flex; align-items: center; justify-content: center; padding: 20px;
-  }
-  .gate .box { width: 100%; max-width: 640px; }
-  .gate h2 { margin: 0 0 4px; font-size: 20px; }
-  .gate .sub { color: var(--dim); margin: 0 0 18px; }
-  .gate input {
-    display: block; width: 100%; margin-top: 10px; padding: 11px 12px;
-    background: #0d0f16; color: var(--ink); border: 1px solid var(--line);
-    border-radius: 8px; font: inherit;
-  }
-  .gate input:focus { outline: 1px solid var(--acc); }
-  .err { color: var(--bad); font-size: 13px; min-height: 18px; margin-top: 10px; }
-  .track {
-    display: block; width: 100%; text-align: left; margin-top: 12px; padding: 14px 16px;
-    background: var(--panel); color: var(--ink); border: 1px solid var(--line);
-    border-radius: 10px; font: inherit; cursor: pointer;
-  }
-  .track:hover { border-color: var(--acc); }
-  .track b { display: block; font-size: 16px; }
-  .track small { color: var(--dim); }
-  @media (max-width: 760px) { main { flex-direction: column; } nav { width: 100%; max-height: 150px; } }
+/* ============================================================ tokens */
+:root{
+  --canvas:#0d1017; --panel:#141924; --panel2:#1a2130; --line:#232b3a;
+  --ink:#dfe6f2; --dim:#8b97ad; --dimmer:#5e6a80;
+  --accent:#7ee787; --accent-hover:#a6f0ac; --accent-muted:rgba(126,231,135,.16);
+  --amber:#ffd45e; --bad:#ff8a8a;
+  --display:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;
+  --body:'Inter',ui-sans-serif,system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Consolas,monospace;
+  --ease:cubic-bezier(.22,.61,.36,1); --ease-out:cubic-bezier(.16,1,.3,1);
+  --tshadow:0 1px 2px rgba(3,6,12,.95),0 3px 12px rgba(3,6,12,.75),0 10px 44px rgba(3,6,12,.8);
+}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden;overflow-x:clip}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--canvas);color:var(--ink);
+  font:400 16px/1.6 var(--body);-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:-.02em;line-height:1.12;margin:0}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+.skip{position:absolute;left:-9999px;top:0;z-index:99;background:var(--accent);color:#08130a;padding:10px 16px;border-radius:0 0 8px 0;font-weight:600}
+.skip:focus{left:0}
+.hidden{display:none !important}
+
+/* one environment behind everything */
+.env{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(1100px 700px at 78% -10%,rgba(126,231,135,.07),transparent 62%),
+    radial-gradient(900px 600px at 8% 108%,rgba(255,212,94,.05),transparent 60%);
+  animation:drift 72s var(--ease) infinite -18s}
+@keyframes drift{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(0,-2.2%,0) scale(1.05)}}
+.grain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E")}
+
+/* ============================================================ chrome */
+header.top{
+  position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;gap:14px;
+  padding:12px 20px;background:rgba(13,16,23,.82);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:9px;font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:-.01em}
+.brand svg{width:22px;height:22px;flex:none}
+.brand em{font-style:normal;color:var(--accent)}
+.top nav{margin-left:auto;display:flex;align-items:center;gap:6px}
+.top nav a,.btn{font:500 14px/1 var(--body);border-radius:9px;padding:10px 14px;text-decoration:none;
+  border:1px solid transparent;cursor:pointer;transition:background .25s var(--ease),color .25s var(--ease),border-color .25s var(--ease),transform .25s var(--ease)}
+.top nav a{color:var(--dim)}
+.top nav a:hover{color:var(--ink);background:var(--panel2)}
+.btn{background:none;color:var(--ink);border-color:var(--line);font-family:var(--body)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.solid{background:var(--accent);color:#08130a;border-color:var(--accent);font-weight:600}
+.btn.solid:hover{background:var(--accent-hover);transform:translateY(-1px)}
+.btn:disabled{opacity:.45;cursor:progress;transform:none}
+@media (pointer:coarse){.btn,.top nav a{min-height:44px;display:inline-flex;align-items:center;justify-content:center}}
+
+/* ============================================================ caret rail (signature) */
+.rail{position:fixed;left:14px;top:0;bottom:0;width:14px;z-index:20;pointer-events:none;display:flex;flex-direction:column;align-items:center}
+.rail .rline{position:absolute;top:74px;bottom:26px;width:2px;background:linear-gradient(var(--line),rgba(35,43,58,0))}
+.rail .rfill{position:absolute;top:74px;width:2px;background:linear-gradient(var(--accent),rgba(126,231,135,.25));height:var(--railh,0px)}
+.rail .caret{position:absolute;top:calc(74px + var(--railh,0px));width:9px;height:15px;margin-top:-7px;background:var(--accent);border-radius:1px;
+  box-shadow:0 0 14px rgba(126,231,135,.65);animation:blink 1.15s steps(1,end) infinite}
+@keyframes blink{0%,55%{opacity:1}56%,100%{opacity:.12}}
+@media (max-width:900px){.rail{display:none}}
+
+/* ============================================================ hero */
+.hero{position:relative;z-index:1;height:420vh}
+.stage{position:sticky;top:0;height:100vh;display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:38px;
+  padding:86px 40px 40px;max-width:1280px;margin:0 auto}
+.hero-copy{position:relative;z-index:2}
+.kicker{font:700 11px/1 var(--mono);letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:16px;display:block}
+.hero h1{font-size:clamp(34px,5.4vw,62px);text-shadow:var(--tshadow)}
+.hero h1 .w{display:inline-block}
+.hero h1 .c{display:inline-block;
+  --kc:clamp(0,(var(--k,0) - var(--th,0))*2.7,1);opacity:var(--kc);
+  transform:translate(calc((1 - var(--kc))*var(--jx,0px)),calc((1 - var(--kc))*var(--jy,0px))) rotate(calc((1 - var(--kc))*var(--jr,0deg)))}
+.hero .sub{max-width:44ch;color:var(--dim);font-size:clamp(15px,1.35vw,18px);margin:18px 0 0;text-shadow:var(--tshadow)}
+.hero .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
+.band{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;pointer-events:none;opacity:0}
+.band.live{pointer-events:auto}
+.band::before{content:"";position:absolute;inset:-8% -12%;pointer-events:none;z-index:-1;
+  opacity:calc(.3 + .7*var(--k,1));
+  background:radial-gradient(ellipse 78% 66% at 40% 50%,rgba(4,7,13,.72) 0%,rgba(4,7,13,.46) 46%,rgba(4,7,13,0) 76%)}
+
+/* terminal */
+.term{position:relative;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#11161f,#0f141c);
+  box-shadow:0 40px 90px -50px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.02) inset;overflow:hidden}
+.term .bar{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+.dot{width:10px;height:10px;border-radius:50%}
+.term .name{margin-left:8px;font:400 12px/1 var(--mono);color:var(--dimmer)}
+.term pre{margin:0;padding:18px 18px 14px;font:400 13.5px/1.72 var(--mono);white-space:pre-wrap;word-break:break-word;min-height:238px;color:#c9d6e8}
+.term .out{border-top:1px dashed var(--line);padding:12px 18px 18px;font:400 13px/1.7 var(--mono);color:var(--accent);min-height:74px}
+.tok-k{color:#c792ea}.tok-s{color:#ffd479}.tok-n{color:#82d3ff}.tok-c{color:#5e6a80;font-style:italic}.tok-f{color:#7ee787}
+.cursor-blk{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--accent);animation:blink 1.15s steps(1,end) infinite}
+.hero-still{display:none}
+
+/* ============================================================ sections */
+main{position:relative;z-index:1}
+section{padding:104px 24px;max-width:1180px;margin:0 auto}
+.eyebrow{font:700 11px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dimmer);margin-bottom:14px}
+h2{font-size:clamp(26px,3.4vw,42px)}
+.lede{color:var(--dim);max-width:60ch;margin:16px 0 0;font-size:17px}
+
+/* roadmap map */
+.map{position:relative;margin-top:44px}
+.map .spine{position:absolute;left:50%;top:0;bottom:0;width:2px;background:linear-gradient(rgba(35,43,58,0),var(--line) 8%,var(--line) 92%,rgba(35,43,58,0));transform:translateX(-1px)}
+.chap{position:relative;display:grid;grid-template-columns:1fr 44px 1fr;gap:0;align-items:start;margin-bottom:26px}
+.chap .node{grid-column:2;display:flex;justify-content:center;padding-top:16px}
+.chap .knob{width:15px;height:15px;border-radius:4px;background:var(--panel2);border:2px solid var(--line);transition:background .4s var(--ease),border-color .4s var(--ease),box-shadow .4s var(--ease)}
+.chap.in .knob{border-color:var(--accent);box-shadow:0 0 0 5px var(--accent-muted)}
+.chap .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;
+  opacity:0;transform:translateY(22px);transition:opacity .7s var(--ease-out),transform .7s var(--ease-out),border-color .35s var(--ease)}
+.chap.in .card{opacity:1;transform:none}
+.chap:nth-child(odd) .card{grid-column:1}
+.chap:nth-child(even) .card{grid-column:3}
+.chap .card:hover{border-color:rgba(126,231,135,.42)}
+.chap h3{font-size:19px;display:flex;align-items:baseline;gap:10px}
+.chap h3 small{font:400 12px/1 var(--mono);color:var(--dimmer)}
+.chap p{color:var(--dim);font-size:14.5px;margin:8px 0 12px}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{font:400 12px/1 var(--mono);color:var(--dim);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 10px;cursor:pointer;
+  transition:color .25s var(--ease),border-color .25s var(--ease),background .25s var(--ease)}
+.pill:hover{color:var(--accent);border-color:rgba(126,231,135,.45)}
+.pill.done{color:var(--accent);border-color:rgba(126,231,135,.3)}
+@media (max-width:820px){
+  .map .spine{left:9px}
+  .chap{grid-template-columns:20px 1fr;gap:14px}
+  .chap .node{grid-column:1;justify-content:flex-start;padding-top:20px}
+  .chap:nth-child(odd) .card,.chap:nth-child(even) .card{grid-column:2}
+}
+
+/* how it works */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;position:relative;overflow:hidden;
+  opacity:0;transform:translateY(24px);transition:opacity .7s var(--ease-out),transform .7s var(--ease-out)}
+.steps.in .step{opacity:1;transform:none}
+.steps.in .step:nth-child(2){transition-delay:.1s}
+.steps.in .step:nth-child(3){transition-delay:.2s}
+.steps.done .step,.steps.done .step:nth-child(2),.steps.done .step:nth-child(3){transition-delay:0s !important}
+.step .num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.16em}
+.step h3{font-size:18px;margin:12px 0 8px}
+.step p{color:var(--dim);font-size:14.5px;margin:0}
+.step code{font:400 12.5px/1.7 var(--mono);color:#c9d6e8;display:block;background:#0f141c;border:1px solid var(--line);border-radius:9px;padding:11px 12px;margin-top:14px;white-space:pre-wrap}
+.step::after{content:"";position:absolute;inset:auto -30% -60% auto;width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle,rgba(126,231,135,.12),transparent 68%);opacity:.5;animation:pulse 7s var(--ease) infinite -2s}
+@keyframes pulse{0%,100%{opacity:.28;transform:scale(1)}50%{opacity:.6;transform:scale(1.16)}}
+@media (max-width:820px){.steps{grid-template-columns:1fr}}
+
+/* dost strip */
+.dost{display:grid;grid-template-columns:1fr 1fr;gap:34px;align-items:center;
+  background:linear-gradient(140deg,rgba(126,231,135,.06),rgba(255,212,94,.04));border:1px solid var(--line);border-radius:18px;padding:34px}
+.bubbles{display:flex;flex-direction:column;gap:10px}
+.bub{max-width:88%;padding:11px 14px;border-radius:13px;font-size:14.5px;line-height:1.55;
+  opacity:0;transform:translateY(10px);transition:opacity .6s var(--ease-out),transform .6s var(--ease-out)}
+.dost.in .bub{opacity:1;transform:none}
+.dost.in .bub:nth-child(2){transition-delay:.55s}
+.dost.in .bub:nth-child(3){transition-delay:1.1s}
+.dost.done .bub,.dost.done .bub:nth-child(2),.dost.done .bub:nth-child(3){transition-delay:0s !important}
+.bub.me{align-self:flex-end;background:var(--panel2);border:1px solid var(--line)}
+.bub.ai{background:rgba(126,231,135,.1);border:1px solid rgba(126,231,135,.24)}
+@media (max-width:820px){.dost{grid-template-columns:1fr}}
+
+/* faq */
+.faq{margin-top:34px;border-top:1px solid var(--line)}
+details{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;padding:18px 4px;font-family:var(--display);font-weight:500;font-size:17px;list-style:none;display:flex;align-items:center;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"+";color:var(--accent);font-family:var(--mono);font-size:18px;transition:transform .3s var(--ease)}
+details[open] summary::before{transform:rotate(45deg)}
+details p{color:var(--dim);margin:0 0 18px 26px;font-size:15px;max-width:70ch}
+
+footer{border-top:1px solid var(--line);padding:34px 24px 46px;color:var(--dimmer);font-size:13.5px;text-align:center;position:relative;z-index:1}
+footer a{color:var(--dim)}
+
+/* ============================================================ gates (login / track) */
+.gate{position:fixed;inset:0;z-index:60;background:rgba(9,12,18,.93);backdrop-filter:blur(9px);
+  display:flex;align-items:center;justify-content:center;padding:22px;overflow-y:auto}
+.gate .box{width:100%;max-width:620px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:30px}
+.gate h2{font-size:23px}
+.gate .sub{color:var(--dim);margin:8px 0 20px;font-size:15px}
+.gate input{display:block;width:100%;margin-top:11px;padding:12px 13px;background:#0f141c;color:var(--ink);
+  border:1px solid var(--line);border-radius:10px;font:400 15px/1.4 var(--body)}
+.gate input:focus{outline:1px solid var(--accent)}
+.err{color:var(--bad);font-size:13.5px;min-height:19px;margin-top:11px}
+.track{display:block;width:100%;text-align:left;margin-top:12px;padding:16px 18px;background:var(--panel2);
+  color:var(--ink);border:1px solid var(--line);border-radius:13px;font:inherit;cursor:pointer;
+  transition:border-color .3s var(--ease),transform .3s var(--ease)}
+.track:hover{border-color:var(--accent);transform:translateX(3px)}
+.track b{display:block;font-family:var(--display);font-size:16px;margin-bottom:5px}
+.track small{color:var(--dim);font-size:13.5px;line-height:1.5;display:block}
+
+/* ============================================================ app */
+#app{position:relative;z-index:1;padding:78px 20px 26px;max-width:1320px;margin:0 auto;display:grid;grid-template-columns:250px 1fr;gap:20px;align-items:start}
+.side{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;position:sticky;top:74px;max-height:calc(100vh - 96px);overflow-y:auto}
+.side .ch{font:700 10.5px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dimmer);padding:14px 10px 7px}
+.side button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--dim);
+  font:400 13px/1.35 var(--body);padding:7px 10px;border-radius:8px;cursor:pointer;transition:background .2s var(--ease),color .2s var(--ease)}
+.side button:hover{background:var(--panel2);color:var(--ink)}
+.side button.on{background:var(--accent-muted);color:var(--accent)}
+.side button.done{color:var(--accent)}
+.work{min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+.card+.card{margin-top:14px}
+.tag{font:700 10.5px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.tag.test{color:var(--amber)}
+.card h2{font-size:21px;margin-bottom:8px}
+.card p.brief{color:var(--dim);font-size:15px;margin:0}
+pre.ex{margin:14px 0 0;padding:14px;background:#0f141c;border:1px solid var(--line);border-radius:11px;
+  font:400 13px/1.72 var(--mono);white-space:pre-wrap;color:#c9d6e8;overflow-x:auto}
+textarea{width:100%;height:270px;margin-top:14px;padding:14px;background:#0f141c;color:var(--ink);
+  border:1px solid var(--line);border-radius:12px;font:400 13.5px/1.7 var(--mono);resize:vertical;tab-size:4}
+textarea:focus{outline:1px solid var(--accent)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.row .hint{margin-left:auto;color:var(--dimmer);font-size:12.5px}
+pre.out{margin:14px 0 0;padding:14px;background:#0f141c;border:1px solid var(--line);border-radius:11px;
+  font:400 13px/1.7 var(--mono);white-space:pre-wrap;min-height:46px;color:var(--dim)}
+pre.out.ok{color:var(--accent);border-color:rgba(126,231,135,.35)}
+pre.out.bad{color:var(--bad);border-color:rgba(255,138,138,.3)}
+.choices{display:flex;flex-direction:column;gap:9px;margin-top:14px}
+.choice{text-align:left;background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+  border-radius:11px;padding:13px 15px;font:400 14.5px/1.5 var(--body);cursor:pointer;transition:border-color .25s var(--ease),transform .25s var(--ease)}
+.choice:hover{border-color:var(--accent);transform:translateX(3px)}
+.choice b{font-family:var(--mono);color:var(--accent);margin-right:9px}
+.hud{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;font-size:13.5px;color:var(--dim)}
+.hud .who{color:var(--ink);font-weight:500}
+.hud .pts{color:var(--amber);font-family:var(--mono)}
+progress{flex:1;min-width:110px;height:7px;accent-color:var(--accent)}
+@media (max-width:900px){#app{grid-template-columns:1fr}.side{position:static;max-height:210px}}
+
+/* ============================================================ chat dock */
+.dock{position:fixed;right:20px;bottom:20px;z-index:50;display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+.dock .fab{display:flex;align-items:center;gap:9px;background:var(--accent);color:#08130a;border:0;border-radius:999px;
+  padding:13px 18px;font:600 14px/1 var(--body);cursor:pointer;box-shadow:0 14px 34px -14px rgba(126,231,135,.75);
+  transition:transform .3s var(--ease),background .3s var(--ease)}
+.dock .fab:hover{transform:translateY(-2px);background:var(--accent-hover)}
+.chat{width:min(400px,calc(100vw - 40px));height:min(540px,calc(100vh - 130px));background:var(--panel);
+  border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 30px 70px -30px rgba(0,0,0,.9);transform-origin:bottom right;
+  opacity:0;transform:translateY(12px) scale(.97);pointer-events:none;transition:opacity .3s var(--ease),transform .3s var(--ease)}
+.chat.open{opacity:1;transform:none;pointer-events:auto}
+.chat .head{display:flex;align-items:center;gap:10px;padding:13px 15px;border-bottom:1px solid var(--line)}
+.chat .head b{font-family:var(--display);font-size:15px}
+.chat .head small{color:var(--dimmer);font-size:12px}
+.chat .head button{margin-left:auto;background:none;border:0;color:var(--dim);font-size:19px;cursor:pointer;line-height:1;padding:4px 8px;border-radius:7px}
+.chat .head button:hover{background:var(--panel2);color:var(--ink)}
+.msgs{flex:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:11px}
+.msg{max-width:86%;padding:11px 13px;border-radius:13px;font-size:14.5px;line-height:1.58;white-space:pre-wrap;word-break:break-word}
+.msg.me{align-self:flex-end;background:var(--panel2);border:1px solid var(--line)}
+.msg.ai{background:rgba(126,231,135,.09);border:1px solid rgba(126,231,135,.22)}
+.msg.sys{align-self:center;color:var(--dimmer);font-size:12.5px;background:none;border:0;text-align:center}
+.typing span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:4px;animation:bounce 1.1s var(--ease) infinite}
+.typing span:nth-child(2){animation-delay:.16s}.typing span:nth-child(3){animation-delay:.32s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.45}40%{transform:translateY(-5px);opacity:1}}
+.ask{display:flex;gap:8px;padding:11px;border-top:1px solid var(--line)}
+.ask input{flex:1;background:#0f141c;border:1px solid var(--line);border-radius:10px;color:var(--ink);
+  padding:11px 12px;font:400 14.5px/1.4 var(--body)}
+.ask input:focus{outline:1px solid var(--accent)}
+.ask button{background:var(--accent);color:#08130a;border:0;border-radius:10px;padding:0 15px;font-weight:600;cursor:pointer}
+.ask button:disabled{opacity:.5;cursor:progress}
+
+/* ============================================================ reduced motion */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none !important;transition:none !important;transition-delay:0s !important}
+  .chap .card,.step,.bub{opacity:1 !important;transform:none !important}
+  .hero{height:auto}
+  .stage{position:static;height:auto;min-height:auto}
+  .hero h1 .c{opacity:1 !important;transform:none !important}
+  .band{position:static;opacity:1 !important;display:block;margin-bottom:26px}
+  .band::before{display:none}
+}
+/* phones and short screens get the composed still hero, no scroll journey */
+@media (max-width: 720px),
+       (orientation: portrait) and (max-width: 1024px),
+       (orientation: portrait) and (pointer: coarse),
+       (orientation: landscape) and (pointer: coarse) and (max-height: 560px){
+  .hero{height:auto}
+  .stage{position:static;height:auto;grid-template-columns:1fr;padding:104px 20px 40px}
+  .band{position:static;opacity:1 !important;display:block}
+  .band+.band{display:none}
+  .band::before{display:none}
+  .hero h1 .c{opacity:1 !important;transform:none !important}
+  .rail{display:none}
+}
+@media (max-height:560px){.rail{display:none}}
+body.paused *,body.paused *::before,body.paused *::after{animation-play-state:paused !important}
 </style>
 </head>
 <body>
+<a class="skip" href="#main">Seedha content pe jao</a>
+<div class="env" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
 
-<!-- step 1: account -->
-<div class="gate" id="gate">
+<div class="rail" aria-hidden="true"><span class="rline"></span><span class="rfill"></span><span class="caret"></span></div>
+
+<header class="top">
+  <span class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#141924"/><path d="M7 10l5 6-5 6" stroke="#7ee787" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 22h9" stroke="#ffd45e" stroke-width="2.5" stroke-linecap="round"/></svg>
+    Python <em>Sikhlo</em>
+  </span>
+  <nav>
+    <a href="#map" class="nav-only">Roadmap</a>
+    <a href="#how" class="nav-only">Kaise chalta hai</a>
+    <a href="#faq" class="nav-only">Sawaal</a>
+    <button class="btn" id="logout" hidden>Logout</button>
+    <button class="btn solid" id="start">Shuru karo</button>
+  </nav>
+</header>
+
+<!-- ============================================================ landing -->
+<div id="landing">
+<div class="hero" id="hero">
+  <div class="stage">
+    <div class="hero-copy">
+      <div class="band" id="b1" data-range="0,0.30">
+        <span class="kicker">Zero se Python</span>
+        <h1 data-split data-seed="7">Seekho, fir khud likho.</h1>
+        <p class="sub">Har topic pehle tumhe sikhata hai, ek chalte hue example ke saath. Uske baad ek alag sawaal poochta hai, taki tum sach me samajh gaye ho ye pata chale.</p>
+        <div class="row">
+          <button class="btn solid" data-start>Free me shuru karo</button>
+          <a class="btn" href="#map">Poora roadmap dekho</a>
+        </div>
+      </div>
+      <div class="band" id="b2" data-range="0.34,0.62">
+        <span class="kicker">Browser me hi chalta hai</span>
+        <h1 data-split data-seed="21">Asli Python. Yahi page pe.</h1>
+        <p class="sub">Kuch install karne ki zarurat nahi. Tumhara code sach me chalta hai aur turant jaanch hota hai, isi tab me.</p>
+      </div>
+      <div class="band" id="b3" data-range="0.66,1">
+        <span class="kicker">Ek dost jo jawab deta hai</span>
+        <h1 data-split data-seed="35">Atak gaye? Poochh lo.</h1>
+        <p class="sub">Galti pe rata hua message nahi milta. Tumhara code padha jata hai, aur har baar nayi baat kahi jati hai. Koi bhi sawaal, kabhi bhi.</p>
+        <div class="row"><button class="btn solid" data-start>Account bana lo</button></div>
+      </div>
+    </div>
+    <div class="term" id="term" aria-hidden="true">
+      <div class="bar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="name">sikhlo.py</span></div>
+      <pre id="code-out"></pre>
+      <div class="out" id="run-out"></div>
+    </div>
+  </div>
+</div>
+
+<main id="main" tabindex="-1">
+  <section id="map">
+    <p class="eyebrow">Poora raasta</p>
+    <h2>Roadmap: 55 topics, 12 chapters.</h2>
+    <p class="lede">Print se shuru, async tak. Har chapter ka har topic apna lesson, apna test aur apna hint leke aata hai. Kisi bhi topic pe click karke seedha wahi se shuru kar sakte ho.</p>
+    <div class="map" id="chapters"><span class="spine" aria-hidden="true"></span></div>
+  </section>
+
+  <section id="how">
+    <p class="eyebrow">Kaise chalta hai</p>
+    <h2>Teen kadam, har topic pe wahi.</h2>
+    <div class="steps" id="steps">
+      <article class="step">
+        <div class="num">01</div><h3>Pehle samajh</h3>
+        <p>Hinglish me chhoti si baat, aur ek example jo sach me chalta hai. Test ka jawab isme nahi hota.</p>
+        <code>x = 9
+print(x // 4, x % 4)   # 2 1</code>
+      </article>
+      <article class="step">
+        <div class="num">02</div><h3>Ab tera test</h3>
+        <p>Example se alag sawaal. Tum code likhte ho, wo yahi browser me chalta hai aur jaanch hota hai.</p>
+        <code>bhaag = ?
+bacha = ?</code>
+      </article>
+      <article class="step">
+        <div class="num">03</div><h3>Atke toh hint</h3>
+        <p>Tumhara likha hua code padh ke hint milta hai. Dus baar galat hua toh jawab bhi mil jata hai.</p>
+        <code>bhai / hamesha decimal deta hai,
+poora number chahiye toh // dekh</code>
+      </article>
+    </div>
+  </section>
+
+  <section id="dost-sec">
+    <div class="dost" id="dost">
+      <div>
+        <p class="eyebrow">Tumhara dost</p>
+        <h2>Har baar nayi baat.</h2>
+        <p class="lede">Purane learning apps ek hi shabaash aur ek hi galti wala message baar baar dikhate hai. Yahan har jawab us waqt likha jata hai, tumhare apne code ko dekh ke. Aur sawaal sirf level ka nahi, kuch bhi ho sakta hai.</p>
+      </div>
+      <div class="bubbles">
+        <div class="bub me">bhai ye loop kyun nahi chala?</div>
+        <div class="bub ai">Tera while ka andar n badal hi nahi raha, isliye shart hamesha sachi reh gayi. n = n * 2 wali line loop ke andar honi chahiye, bahar nahi.</div>
+        <div class="bub me">aur job ke liye kya seekhu?</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <p class="eyebrow">Sawaal</p>
+    <h2>Jo aksar poocha jata hai.</h2>
+    <div class="faq">
+      <details open><summary>Kya mujhe pehle se Python aana chahiye?</summary><p>Bilkul nahi. Beginner track print se shuru hota hai, aur level 21 tak koi function nahi aata. Jise pehle se aata hai wo Medium ya Advanced se shuru kar sakta hai.</p></details>
+      <details><summary>Kuch install karna padega?</summary><p>Nahi. Python browser me hi chalta hai. Pehli baar page thoda sa download karta hai, uske baad tumhara code yahi chalta hai.</p></details>
+      <details><summary>Mera progress kahan save hota hai?</summary><p>Server pe, tumhare account me. Browser saaf kar do ya doosre browser me login kar lo, points aur solved levels wahi ke wahi milenge.</p></details>
+      <details><summary>Kya ye sach me free hai?</summary><p>Haan. Ye tumhare apne computer pe chalta hai. Sirf dost wala chatbot ek Claude API key maangta hai, aur wo key server pe rehti hai, page me kabhi nahi jati.</p></details>
+      <details><summary>Kitna time lagega?</summary><p>Har topic 5 se 15 minute ka hai. Roz ek chapter karo toh do hafte me poora roadmap khatam.</p></details>
+    </div>
+  </section>
+</main>
+<footer>
+  <p>Python Sikhlo. Tumhare apne computer pe chalta hai, tumhara data tumhare paas rehta hai.</p>
+  <p style="margin-top:8px"><a href="https://github.com/Aimubh/Python_sikhlo">GitHub pe code dekho</a></p>
+</footer>
+</div>
+
+<!-- ============================================================ app -->
+<div id="app" class="hidden">
+  <aside class="side" id="side" aria-label="Topic list"></aside>
+  <div class="work">
+    <div class="hud">
+      <span class="who" id="who"></span>
+      <span class="pts" id="pts"></span>
+      <progress id="bar" value="0" max="1"></progress>
+      <span id="count"></span>
+    </div>
+    <div class="card" id="lessoncard">
+      <div class="tag">Pehle samajh</div>
+      <h2 id="ltitle"></h2>
+      <p class="brief" id="lesson"></p>
+      <pre class="ex" id="example"></pre>
+      <div class="row"><button class="btn solid" id="gotest">Samajh gaya, ab test do</button></div>
+    </div>
+    <div class="card hidden" id="taskcard">
+      <div class="tag test">Ab tera test, upar wale example se alag sawaal</div>
+      <h2 id="title"></h2>
+      <p class="brief" id="brief"></p>
+      <div class="choices hidden" id="choices"></div>
+    </div>
+    <div id="testarea" class="hidden">
+      <textarea id="code" spellcheck="false" aria-label="Tumhara code"></textarea>
+      <div class="row">
+        <button class="btn solid" id="run" disabled>Check karo</button>
+        <button class="btn" id="sol">Jawab dikhao</button>
+        <button class="btn" id="reset">Reset</button>
+        <button class="btn" id="reread">Lesson dubara</button>
+        <span class="hint">Ctrl+Enter se bhi check hota hai</span>
+      </div>
+      <pre class="out" id="out">Python load ho raha hai...</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ gates -->
+<div class="gate hidden" id="gate">
   <div class="box">
-    <h2>Python <span style="color:var(--acc)">Quest</span></h2>
-    <p class="sub">Account bana le - tera progress server pe save hoga, browser clear karne pe bhi nahi jayega.</p>
-    <input id="u" placeholder="Username (3-20 letters/numbers)" autocomplete="username">
+    <h2>Account bana lo</h2>
+    <p class="sub">Progress server pe save hota hai. Browser clear karo ya doosra browser kholo, sab wapas mil jayega.</p>
+    <input id="u" placeholder="Username (3 se 20 letters ya numbers)" autocomplete="username">
     <input id="p" type="password" placeholder="Password (kam se kam 4)" autocomplete="current-password">
     <div class="row">
-      <button class="act" id="login">Login</button>
-      <button class="act ghost" id="signup">Naya account banao</button>
+      <button class="btn solid" id="login">Login</button>
+      <button class="btn" id="signup">Naya account</button>
+      <button class="btn" id="gclose" style="margin-left:auto">Abhi nahi</button>
     </div>
     <div class="err" id="autherr"></div>
   </div>
 </div>
 
-<!-- step 2: how much Python do you already know -->
 <div class="gate hidden" id="tracks">
   <div class="box">
     <h2>Tera Python level kya hai?</h2>
-    <p class="sub">Isi hisaab se shuruaat hogi. Baad me kisi bhi level pe ja sakta hai.</p>
+    <p class="sub">Isi hisaab se shuruaat hogi. Baad me kisi bhi topic pe ja sakte ho.</p>
     <div id="trackbtns"></div>
   </div>
 </div>
 
-<!-- step 3: the game -->
-<div id="app" class="hidden">
-<header>
-  <h1>Python <span>Quest</span></h1>
-  <progress id="bar" value="0" max="1"></progress>
-  <button class="act ghost" id="key" title="Claude API key for AI hints">AI hints: off</button>
-  <button class="act ghost" id="logout">Logout</button>
-  <div id="score">loading Python...</div>
-</header>
-<main>
-  <nav id="nav"></nav>
-  <section>
-    <div class="card" id="lessoncard">
-      <div class="tag">Pehle samajh</div>
-      <h2 id="ltitle"></h2>
-      <p id="lesson"></p>
-      <pre id="example"></pre>
-      <div class="row"><button class="act" id="gotest">Samajh gaya - ab test do &rarr;</button></div>
+<!-- ============================================================ chat -->
+<div class="dock">
+  <div class="chat" id="chat" role="dialog" aria-label="Python dost">
+    <div class="head">
+      <span class="dot" style="background:var(--accent)"></span>
+      <div><b>Tumhara dost</b><br><small id="chatctx">Kuch bhi poochh lo</small></div>
+      <button id="chatclose" aria-label="Chat band karo">&times;</button>
     </div>
-
-    <div class="card hidden" id="taskcard">
-      <div class="tag">Ab tera test - upar wale example se alag sawaal</div>
-      <h2 id="title"></h2>
-      <p id="brief"></p>
-    </div>
-    <div id="testarea" class="hidden">
-      <textarea id="code" spellcheck="false"></textarea>
-      <div class="row">
-        <button class="act" id="run" disabled>Check (Ctrl+Enter)</button>
-        <button class="act ghost" id="sol">Show solution</button>
-        <button class="act ghost" id="reset">Reset code</button>
-        <button class="act ghost" id="reread">Lesson dubara padho</button>
-        <span class="hint">Tab inserts 4 spaces</span>
-      </div>
-      <pre id="out">Downloading the Python runtime (first load only, needs internet)...</pre>
-    </div>
-  </section>
-</main>
+    <div class="msgs" id="msgs"></div>
+    <form class="ask" id="askform">
+      <input id="askinput" placeholder="Sawaal likho..." autocomplete="off" aria-label="Sawaal">
+      <button class="btn solid" type="submit" id="asksend">Bhejo</button>
+    </form>
+  </div>
+  <button class="fab" id="fab">Dost se poochho</button>
 </div>
 
 <script src="levels.js"></script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 <script>
-const L = window.LEVELS;
-const $ = id => document.getElementById(id);
-let cur = 0, py = null;
-let auth = { user: null, token: null };
-// progress is whatever the server hands back; server is the source of truth
-let P = { done: [], pts: 0, tries: {}, code: {}, track: null };
+"use strict";
+const L = window.LEVELS, CH = window.CHAPTERS, $ = id => document.getElementById(id);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+const STATIC_GATES = [
+  '(max-width: 720px)',
+  '(orientation: portrait) and (max-width: 1024px)',
+  '(orientation: portrait) and (pointer: coarse)',
+  '(orientation: landscape) and (pointer: coarse) and (max-height: 560px)',
+  '(prefers-reduced-motion: reduce)'
+];
 
-// ---------------------------------------------------------------- accounts
-async function apiCall(route, body) {
-  const res = await fetch(route, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
+/* ========================================================== hero: typed program */
+const HERO_SRC =
+`# Python Sikhlo
+naam = "dost"
+score = 0
+
+for topic in ["print", "loop", "dict"]:
+    score += 10
+    print(f"{naam}, {topic} ho gaya. score {score}")
+
+print("ab tera turn:", score, "points")`;
+const HERO_OUT = ['dost, print ho gaya. score 10', 'dost, loop ho gaya. score 20',
+                  'dost, dict ho gaya. score 30', 'ab tera turn: 30 points'];
+
+// One pass, one regex. Chained replaces used to match inside the markup the
+// previous replace had just written, and leaked "tok-c"> into the page.
+const TOKENS = /(#[^\n]*)|(f?"[^"]*"?|'[^']*'?)|\b(for|in|print|import|def|return|if|else|while|True|False|None)\b|(\b\d+\b)/g;
+const esc = t => t.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function paint(txt){
+  let out = '', last = 0, m;
+  TOKENS.lastIndex = 0;
+  while ((m = TOKENS.exec(txt)) !== null){
+    out += esc(txt.slice(last, m.index));
+    const cls = m[1] ? 'tok-c' : m[2] ? 'tok-s' : m[3] ? 'tok-k' : 'tok-n';
+    out += '<span class="' + cls + '">' + esc(m[0]) + '</span>';
+    last = m.index + m[0].length;
+  }
+  return out + esc(txt.slice(last));
+}
+
+const bands = [...document.querySelectorAll('.band')].map(el => {
+  const [a, b] = el.dataset.range.split(',').map(Number);
+  return { el, a, b, op: -1, k: -1 };
+});
+const smoothstep = (p, e0, e1) => { const t = Math.min(1, Math.max(0, (p - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+function splitText(){                       // seeded split so every load matches
+  document.querySelectorAll('[data-split]').forEach(h => {
+    if (h.dataset.done) return;
+    h.dataset.done = '1';
+    let s = (+h.dataset.seed || 1) >>> 0;
+    const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+    const text = h.textContent.trim();
+    h.innerHTML = '';
+    const sr = document.createElement('span');
+    sr.textContent = text;
+    sr.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)';
+    h.append(sr);
+    const vis = document.createElement('span');
+    vis.setAttribute('aria-hidden', 'true');
+    text.split(' ').forEach((word, wi, all) => {
+      const w = document.createElement('span');
+      w.className = 'w';
+      [...word].forEach(ch => {
+        const c = document.createElement('span');
+        c.className = 'c';
+        c.textContent = ch;
+        c.style.setProperty('--th', (rnd() * .5).toFixed(3));
+        c.style.setProperty('--jx', ((rnd() - .5) * 46).toFixed(1) + 'px');
+        c.style.setProperty('--jy', ((rnd() - .5) * 34).toFixed(1) + 'px');
+        c.style.setProperty('--jr', ((rnd() - .5) * 22).toFixed(1) + 'deg');
+        w.append(c);
+      });
+      vis.append(w);
+      if (wi < all.length - 1) vis.append(' ');
+    });
+    h.append(vis);
   });
-  const data = await res.json().catch(() => ({ error: "Server ne kuch ajeeb bheja." }));
-  if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+}
+splitText();
+
+let target = 0, shown = 0, rafId = null, lastTick = 0, heroOn = true, loadK = 0, loadType = 0, scrubOn = false;
+const heroEl = $('hero'), codeOut = $('code-out'), runOut = $('run-out');
+let lastChars = -1, lastOut = -1;
+
+function heroProgress(){
+  const r = heroEl.getBoundingClientRect();
+  const span = heroEl.offsetHeight - innerHeight;
+  return span <= 0 ? 1 : clamp(-r.top / span, 0, 1);
+}
+function drawHero(p){
+  // max(): once the load ramp has typed the opening lines they stay typed,
+  // even when the visitor scrolls back to the very top
+  const n = Math.round(clamp(Math.max(p, loadType) / .82, 0, 1) * HERO_SRC.length);
+  if (n !== lastChars){                      // only touch the DOM when it changed
+    lastChars = n;
+    codeOut.innerHTML = paint(HERO_SRC.slice(0, n)) + (n < HERO_SRC.length ? '<span class="cursor-blk"></span>' : '');
+  }
+  const lines = n >= HERO_SRC.length ? Math.round(clamp((p - .82) / .16, 0, 1) * HERO_OUT.length) : 0;
+  if (lines !== lastOut){
+    lastOut = lines;
+    runOut.textContent = HERO_OUT.slice(0, lines).map(s => '> ' + s).join('\n');
+  }
+  bands.forEach(b => {
+    const f = Math.min(.02, (b.b - b.a) / 3);
+    const first = b === bands[0], last = b === bands[bands.length - 1];
+    const op = (first ? 1 : smoothstep(p, b.a, b.a + f)) * (last ? 1 : (1 - smoothstep(p, b.b - f, b.b)));
+    const kScroll = clamp((p - b.a) / Math.min(.03, (b.b - b.a) * .38), 0, 1);
+    const k = first ? Math.max(kScroll, loadK) : kScroll;
+    if (Math.abs(op - b.op) > .004){ b.op = op; b.el.style.opacity = op.toFixed(3); b.el.classList.toggle('live', op > .5); }
+    if (Math.abs(k - b.k) > .008){ b.k = k; b.el.style.setProperty('--k', k.toFixed(3)); }
+  });
+}
+function tick(now){
+  const dt = Math.min(100, now - (lastTick || now));
+  lastTick = now;
+  shown += (target - shown) * (1 - Math.pow(1 - .16, dt / 16.667));
+  if (Math.abs(target - shown) < .0005){ shown = target; rafId = null; lastTick = 0; }
+  else rafId = requestAnimationFrame(tick);
+  drawHero(shown);
+}
+function onScroll(){
+  if (scrubOn){                       // in static mode the hero is already painted,
+    target = heroProgress();          // and driving it here would wipe it back to empty
+    if (rafId === null && heroOn) rafId = requestAnimationFrame(tick);
+  }
+  const doc = document.documentElement;
+  const railP = clamp(scrollY / Math.max(1, doc.scrollHeight - innerHeight), 0, 1);
+  document.documentElement.style.setProperty('--railh', (railP * (innerHeight - 104)).toFixed(1) + 'px');
+}
+function pinHero(){                          // reduced motion / phone: show it finished
+  lastChars = lastOut = -1;
+  codeOut.innerHTML = paint(HERO_SRC);
+  runOut.textContent = HERO_OUT.map(s => '> ' + s).join('\n');
+  bands.forEach(b => { b.op = b.k = -1; b.el.style.opacity = ''; b.el.style.setProperty('--k', 1); });
+}
+function enableScrub(){
+  if (scrubOn) return;
+  scrubOn = true;
+  bands.forEach(b => { b.op = b.k = -1 });
+  addEventListener('scroll', onScroll, { passive: true });
+  const t0 = performance.now();
+  (function ramp(now){                        // band one assembles once on load
+    loadK = clamp((now - t0) / 900, 0, 1);
+    loadType = clamp((now - t0) / 2100, 0, 1) * .30;    // types the first lines by itself
+    drawHero(shown);
+    if (loadK < 1 || loadType < .30) requestAnimationFrame(ramp);
+  })(t0);
+  onScroll();
+}
+function disableScrub(){
+  if (!scrubOn) return;
+  scrubOn = false;
+  removeEventListener('scroll', onScroll);
+  if (rafId !== null){ cancelAnimationFrame(rafId); rafId = null; }
+  pinHero();
+}
+const MQLS = STATIC_GATES.map(q => matchMedia(q));
+function applyHeroMode(){
+  if (MQLS.some(m => m.matches)){ disableScrub(); pinHero(); }   // pin always: the
+  else enableScrub();                                            // scrub may never have armed
+}
+MQLS.forEach(m => m.addEventListener('change', applyHeroMode));
+new IntersectionObserver(es => { heroOn = es[0].isIntersecting; if (heroOn) onScroll(); })
+  .observe(heroEl);
+applyHeroMode();
+
+/* entrances */
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  e.target.classList.add('in');
+  io.unobserve(e.target);
+  setTimeout(() => e.target.classList.add('done'), 1400);   // retire stagger delays
+}), { threshold: .2, rootMargin: '0px 0px -8% 0px' });
+document.addEventListener('visibilitychange', () => document.body.classList.toggle('paused', document.hidden));
+
+/* ========================================================== the roadmap map */
+function buildMap(){
+  const host = $('chapters');
+  CH.forEach(ch => {
+    const topics = L.map((lv, i) => ({ lv, i })).filter(x => x.lv.ch === ch.id);
+    if (!topics.length) return;
+    const sec = document.createElement('article');
+    sec.className = 'chap';
+    sec.innerHTML = `<div class="node"><span class="knob"></span></div>
+      <div class="card"><h3>${ch.name} <small>${topics.length} topics</small></h3>
+      <p>${ch.desc}</p><div class="pills"></div></div>`;
+    const pills = sec.querySelector('.pills');
+    topics.forEach(({ lv, i }) => {
+      const b = document.createElement('button');
+      b.className = 'pill';
+      b.type = 'button';
+      b.dataset.i = i;
+      b.textContent = (i + 1) + '. ' + lv.t;
+      b.onclick = () => wantLevel(i);
+      pills.append(b);
+    });
+    host.append(sec);
+    io.observe(sec);
+  });
+  io.observe($('steps'));
+  io.observe($('dost'));
+}
+buildMap();
+
+/* ========================================================== accounts */
+let auth = { user: null, token: null };
+let P = { done: [], pts: 0, tries: {}, code: {}, track: null };
+let done = new Set(), cur = 0, py = null, pending = null;
+
+async function apiCall(route, body){
+  const res = await fetch(route, { method: 'POST', headers: { 'content-type': 'application/json' },
+                                   body: JSON.stringify(body) });
+  const data = await res.json().catch(() => ({ error: 'Server ne kuch ajeeb bheja.' }));
+  if (!res.ok) throw new Error(data.error || ('Error ' + res.status));
   return data;
 }
-
-async function doAuth(route) {
-  $("autherr").textContent = "";
+function save(){
+  P.done = [...done];
+  apiCall('/api/save', { user: auth.user, token: auth.token, progress: P })
+    .catch(e => { $('count').textContent = 'save fail: ' + e.message; });
+}
+async function doAuth(route){
+  $('autherr').textContent = '';
   try {
-    const d = await apiCall(route, { user: $("u").value, pass: $("p").value });
+    const d = await apiCall(route, { user: $('u').value, pass: $('p').value });
     auth = { user: d.user, token: d.token };
-    localStorage.setItem("pq_auth", JSON.stringify(auth));
+    localStorage.setItem('pq_auth', JSON.stringify(auth));
     startGame(d.progress);
   } catch (e) {
-    $("autherr").textContent = e.message.includes("fetch")
-      ? "Server nahi mila. Terminal me `python learn.py --serve` chalao."
-      : e.message;
+    $('autherr').textContent = /fetch|Failed/.test(e.message)
+      ? 'Server nahi mila. Terminal me python learn.py --serve chalao.' : e.message;
   }
 }
-$("login").onclick = () => doAuth("/api/login");
-$("signup").onclick = () => doAuth("/api/signup");
-$("p").addEventListener("keydown", e => { if (e.key === "Enter") doAuth("/api/login"); });
-$("logout").onclick = () => { localStorage.removeItem("pq_auth"); location.reload(); };
+$('login').onclick = () => doAuth('/api/login');
+$('signup').onclick = () => doAuth('/api/signup');
+$('p').addEventListener('keydown', e => { if (e.key === 'Enter') doAuth('/api/login'); });
+$('gclose').onclick = () => { $('gate').classList.add('hidden'); pending = null; };
+$('logout').onclick = () => { localStorage.removeItem('pq_auth'); location.reload(); };
+function openGate(){ $('gate').classList.remove('hidden'); $('u').focus(); }
+$('start').onclick = () => auth.token ? showApp() : openGate();
+document.querySelectorAll('[data-start]').forEach(b => b.onclick = () => auth.token ? showApp() : openGate());
+function wantLevel(i){ pending = i; auth.token ? showApp(i) : openGate(); }
 
-let saving = null;
-function save() {
-  P.done = [...done];
-  saving = apiCall("/api/save", { user: auth.user, token: auth.token, progress: P })
-    .catch(e => { $("score").textContent = "save fail: " + e.message; });
-}
-
-// ---------------------------------------------------------------- track pick
-function askTrack() {
-  $("gate").classList.add("hidden");
-  $("tracks").classList.remove("hidden");
-  $("trackbtns").innerHTML = "";
-  window.TRACKS.forEach(t => {
-    const b = document.createElement("button");
-    b.className = "track";
-    b.innerHTML = `<b>${t.name}</b><small>${t.desc}<br>Level ${t.start + 1} se shuru</small>`;
-    b.onclick = () => { P.track = t.id; save(); enterApp(t.start); };
-    $("trackbtns").append(b);
-  });
-}
-
-let done = new Set();
-function startGame(progress) {
+function startGame(progress){
   P = Object.assign({ done: [], pts: 0, tries: {}, code: {}, track: null }, progress || {});
   done = new Set(P.done);
+  $('gate').classList.add('hidden');
+  $('logout').hidden = false;
+  $('start').textContent = 'Practice';
+  if (pending !== null){ const i = pending; pending = null; return showApp(i); }
   if (!P.track) return askTrack();
-  const track = window.TRACKS.find(t => t.id === P.track) || window.TRACKS[0];
-  const next = [...Array(L.length).keys()].find(i => i >= track.start && !done.has(i));
-  enterApp(next ?? [...Array(L.length).keys()].find(i => !done.has(i)) ?? track.start);
+  showApp();
 }
-
-function enterApp(i) {
-  $("gate").classList.add("hidden");
-  $("tracks").classList.add("hidden");
-  $("app").classList.remove("hidden");
-  drawKeyBtn();
+function askTrack(){
+  $('tracks').classList.remove('hidden');
+  const host = $('trackbtns');
+  host.innerHTML = '';
+  window.TRACKS.forEach(t => {
+    const b = document.createElement('button');
+    b.className = 'track';
+    b.type = 'button';
+    b.innerHTML = `<b>${t.name}</b><small>${t.desc}<br>Level ${t.start + 1} se shuru</small>`;
+    b.onclick = () => { P.track = t.id; save(); $('tracks').classList.add('hidden'); showApp(t.start); };
+    host.append(b);
+  });
+}
+function showApp(i){
+  $('tracks').classList.add('hidden');
+  $('landing').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  document.querySelectorAll('.nav-only').forEach(a => a.classList.add('hidden'));
+  disableScrub();
+  if (i === undefined){
+    const tr = window.TRACKS.find(t => t.id === P.track) || window.TRACKS[0];
+    i = [...Array(L.length).keys()].find(n => n >= tr.start && !done.has(n))
+        ?? [...Array(L.length).keys()].find(n => !done.has(n)) ?? tr.start;
+  }
+  buildSide();
   load(i);
   bootPyodide();
+  scrollTo(0, 0);
 }
 
-// ---------------------------------------------------------------- AI hint
-const AI_SYSTEM = `You are the learner's Python dost (friend) teaching them from scratch.
-Reply in Hinglish: romanized Hindi mixed with English, casual and warm, like "bhai ye tune galat kiya hai,
-isko aise nahi waise karte hai". 2-3 short lines, max 40 words, plain text only - no markdown, no code blocks.
-Read THEIR code and point at THEIR specific mistake - name the line or the exact thing they wrote wrong.
-Never write the corrected code or give the full answer. Nudge, don't solve. End with encouragement.`;
-
-async function aiHint(err, tries) {
-  const apiKey = localStorage.getItem("pq_key");
-  if (!apiKey) return null;
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
-    body: JSON.stringify({
-      model: "claude-opus-5",
-      max_tokens: 400,
-      output_config: { effort: "low" },   // a 2-line hint doesn't need deep thinking
-      system: AI_SYSTEM,
-      messages: [{ role: "user", content:
-        `Task: ${L[cur].brief}\n\nLearner's code:\n${$("code").value}\n\n`
-        + `Checker said: ${err}\n\nGalat attempt number: ${tries}` }],
-    }),
-  });
-  if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 200)}`);
-  const data = await res.json();
-  if (data.stop_reason === "refusal") return null;   // fall back to the static hint
-  return data.content.filter(b => b.type === "text").map(b => b.text).join("").trim() || null;
-}
-
-$("key").onclick = () => {
-  const k = prompt("Claude API key (sk-ant-...). Blank = turn AI hints off.\n"
-    + "Stored in this browser's localStorage only.", localStorage.getItem("pq_key") || "");
-  if (k === null) return;
-  k.trim() ? localStorage.setItem("pq_key", k.trim()) : localStorage.removeItem("pq_key");
-  drawKeyBtn();
-};
-function drawKeyBtn() {
-  $("key").textContent = localStorage.getItem("pq_key") ? "AI hints: on" : "AI hints: off";
-}
-
-// ---------------------------------------------------------------- the game
+/* ========================================================== the practice engine */
 const GLUE = `
-import contextlib, io, json, traceback
+import ast, contextlib, io, json, traceback
 ${window.CHECK_SRC}
 def check_web(level_json, src):
-    return check(json.loads(level_json), src) or ""
+    lv = json.loads(level_json)
+    lv["tests"] = [(e, ast.literal_eval(v)) for e, v in lv["tests"]]
+    return check(lv, src) or ""
 `;
-
-function drawNav() {
-  $("nav").innerHTML = "";
-  L.forEach((lv, i) => {
-    const b = document.createElement("button");
-    b.textContent = `${done.has(i) ? "✓" : i + 1 + "."} ${lv.t}`;
-    b.className = (i === cur ? "on " : "") + (done.has(i) ? "done" : "");
-    b.onclick = () => load(i);
-    $("nav").append(b);
-  });
-  $("bar").max = L.length;
-  $("bar").value = done.size;
-  $("score").textContent = `${auth.user} · ${P.pts} points · ${done.size} / ${L.length} solved`;
-}
-
-function showLesson(on) {
-  $("lessoncard").classList.toggle("hidden", !on);
-  $("taskcard").classList.toggle("hidden", on);
-  $("testarea").classList.toggle("hidden", on);
-}
-$("gotest").onclick = () => { showLesson(false); $("code").focus(); };
-$("reread").onclick = () => showLesson(true);
-
-function load(i) {
-  saveCode();
-  cur = i;
-  $("ltitle").textContent = `Level ${i + 1}: ${L[i].t}`;
-  $("lesson").textContent = L[i].lesson;
-  $("example").textContent = L[i].example;
-  $("title").textContent = `Level ${i + 1}: ${L[i].t}`;
-  $("brief").textContent = L[i].brief;
-  $("code").value = P.code[i] ?? L[i].start;
-  $("out").className = "";
-  $("out").textContent = done.has(i) ? "Solved. Edit and re-check any time."
-                                     : (py ? "Write your code, then Check." : "Loading Python...");
-  showLesson(true);          // teach first, every time
-  drawNav();
-}
-
-function saveCode() {
-  if (!auth.token) return;
-  P.code[cur] = $("code").value;
-  save();
-}
-
-async function run() {
-  if (!py) return;
-  saveCode();
-  $("run").disabled = true;
-  $("out").className = "";
-  $("out").textContent = "Running...";
-  let err;
-  try {
-    err = py.globals.get("check_web")(JSON.stringify(L[cur]), $("code").value);
-  } catch (e) {
-    err = String(e);
-  }
-  $("run").disabled = false;
-
-  const n = P.tries[cur] || 0;
-  if (err) {
-    P.tries[cur] = n + 1;
-    $("out").className = "bad";
-    const scold = window.SCOLD[Math.min(n, window.SCOLD.length - 1)];
-    let hint = L[cur].hint;
-    if (localStorage.getItem("pq_key")) {
-      $("out").textContent = `✗ ${scold}\nRuk bhai, tera code padh raha hu...`;
-      try {
-        hint = (await aiHint(err, n + 1)) || hint;
-      } catch (e) {
-        hint = `${hint}\n(AI hint nahi aaya: ${e.message})`;
-      }
-    }
-    let msg = `${scold}\n${hint}\n\n(technically: ${err})\n\nGalat attempts: ${n + 1}`;
-    if (n + 1 >= window.REVEAL) {
-      msg += `/${window.REVEAL} — bhai bahut ho gaya, ab main hi bata deta hu.`
-           + ` Ise padh, samajh, fir apne haath se likh:\n\n${L[cur].sol}`
-           + `\n\nAur ye extra task bhi kar:\n${L[cur].bonus}`;
-    } else {
-      msg += ` — ${window.REVEAL} pe main answer bata dunga.`;
-    }
-    $("out").textContent = "✗ " + msg;
-    save();
-    return;
-  }
-  const got = Math.max(20, 100 - 10 * n);   // kam galtiyan, zyada points
-  const first = !done.has(cur);
-  if (first) P.pts += got;
-  done.add(cur);
-  $("out").className = "ok";
-  const cheer = window.CHEER[Math.min(n, window.CHEER.length - 1)];
-  const all = done.size === L.length;
-  $("out").textContent = `🎉 ${cheer}  ${first ? `+${got} points` : "(dobara solve kiya)"}`
-    + `  ·  Total: ${P.pts} points\n\nExtra task bhi try kar:\n${L[cur].bonus}\n\n`
-    + (all ? "Saare levels khatam — tune Python Quest jeet liya, bhai!"
-           : "Agla level 2 second me...");
-  save();
-  drawNav();
-  if (!all) setTimeout(() => { if (cur < L.length - 1) load(cur + 1); }, 2000);
-}
-
-$("run").onclick = run;
-$("sol").onclick = () => { $("out").className = ""; $("out").textContent = L[cur].sol; };
-$("reset").onclick = () => { $("code").value = L[cur].start; saveCode(); };
-$("code").addEventListener("keydown", e => {
-  if (e.key === "Tab") {
-    e.preventDefault();
-    const s = e.target.selectionStart;
-    e.target.setRangeText("    ", s, e.target.selectionEnd, "end");
-  }
-});
-document.addEventListener("keydown", e => {
-  if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !$("testarea").classList.contains("hidden")) {
-    e.preventDefault();
-    run();
-  }
-});
-
-function bootPyodide() {
+function bootPyodide(){
   if (py) return;
   loadPyodide().then(p => {
     py = p;
     py.runPython(GLUE);
-    $("run").disabled = false;
-    if ($("out").textContent.startsWith("Loading") || $("out").textContent.startsWith("Download"))
-      $("out").textContent = "Python ready. Write your code, then Check.";
-  }).catch(e => { $("out").className = "bad"; $("out").textContent = "Could not load Pyodide: " + e; });
+    $('run').disabled = false;
+    if (/load ho raha|Loading/.test($('out').textContent)) $('out').textContent = 'Python ready. Code likho, fir Check karo.';
+  }).catch(e => { $('out').className = 'out bad'; $('out').textContent = 'Python load nahi hua: ' + e; });
+}
+function buildSide(){
+  const side = $('side');
+  side.innerHTML = '';
+  CH.forEach(ch => {
+    const items = L.map((lv, i) => ({ lv, i })).filter(x => x.lv.ch === ch.id);
+    if (!items.length) return;
+    const h = document.createElement('div');
+    h.className = 'ch';
+    h.textContent = ch.name;
+    side.append(h);
+    items.forEach(({ lv, i }) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.i = i;
+      b.textContent = (done.has(i) ? '✓ ' : (i + 1) + '. ') + lv.t;
+      b.className = (i === cur ? 'on ' : '') + (done.has(i) ? 'done' : '');
+      b.onclick = () => load(i);
+      side.append(b);
+    });
+  });
+  $('who').textContent = auth.user || '';
+  $('pts').textContent = P.pts + ' points';
+  $('bar').max = L.length;
+  $('bar').value = done.size;
+  $('count').textContent = done.size + ' / ' + L.length + ' solved';
+}
+function showLesson(on){
+  $('lessoncard').classList.toggle('hidden', !on);
+  $('taskcard').classList.toggle('hidden', on);
+  $('testarea').classList.toggle('hidden', on);
+}
+$('gotest').onclick = () => { showLesson(false); $('code').focus(); };
+$('reread').onclick = () => showLesson(true);
+
+function load(i){
+  saveCode();
+  cur = i;
+  const lv = L[i];
+  $('ltitle').textContent = `Level ${i + 1}: ${lv.t}`;
+  $('lesson').textContent = lv.lesson;
+  $('example').textContent = lv.example;
+  $('title').textContent = `Level ${i + 1}: ${lv.t}`;
+  $('brief').textContent = lv.brief;
+  $('code').value = P.code[i] ?? lv.start;
+  const ch = $('choices');
+  ch.innerHTML = '';
+  ch.classList.toggle('hidden', lv.kind !== 'quiz');
+  if (lv.kind === 'quiz') (lv.choices || []).forEach((c, n) => {
+    const letter = 'abcdefgh'[n];
+    const b = document.createElement('button');
+    b.className = 'choice';
+    b.type = 'button';
+    b.innerHTML = `<b>${letter}</b>${c}`;
+    b.onclick = () => { $('code').value = `answer = '${letter}'`; run(); };
+    ch.append(b);
+  });
+  $('out').className = 'out';
+  $('out').textContent = done.has(i) ? 'Ye ho chuka hai. Dubara khel sakte ho.'
+                                     : (py ? 'Python ready. Code likho, fir Check karo.' : 'Python load ho raha hai...');
+  $('chatctx').textContent = 'Level ' + (i + 1) + ': ' + lv.t;
+  showLesson(true);
+  buildSide();
+}
+function saveCode(){
+  if (!auth.token || !L[cur]) return;
+  P.code[cur] = $('code').value;
+}
+async function coach(err, tries){          // a fresh line every time, from Claude
+  try {
+    const d = await apiCall('/api/coach', { user: auth.user, token: auth.token,
+      level: cur, code: $('code').value, err: err || '', tries });
+    return d.line || null;
+  } catch (e) { return null; }
+}
+async function run(){
+  if (!py) return;
+  saveCode();
+  $('run').disabled = true;
+  $('out').className = 'out';
+  $('out').textContent = 'Chala raha hu...';
+  let err;
+  try { err = py.globals.get('check_web')(JSON.stringify(L[cur]), $('code').value); }
+  catch (e) { err = String(e); }
+  $('run').disabled = false;
+  const n = P.tries[cur] || 0;
+
+  if (err){
+    P.tries[cur] = n + 1;
+    $('out').className = 'out bad';
+    $('out').textContent = 'Ruk, tera code padh raha hu...';
+    const line = await coach(err, n + 1);
+    let msg = (line || (freshLine(FALLBACK_WRONG) + '\n' + L[cur].hint))
+            + `\n\n(technically: ${err})\n\nGalat attempts: ${n + 1}`;
+    if (n + 1 >= window.REVEAL){
+      msg += `/${window.REVEAL}. Bas bhai, ab main hi bata deta hu. Ise padh, samajh, fir apne haath se likh:\n\n`
+           + L[cur].sol + '\n\nAur ye extra task bhi kar:\n' + L[cur].bonus;
+    }
+    $('out').className = 'out bad';
+    $('out').textContent = '✗ ' + msg;
+    save();
+    return;
+  }
+  const got = Math.max(20, 100 - 10 * n);
+  const first = !done.has(cur);
+  if (first) P.pts += got;
+  done.add(cur);
+  $('out').className = 'out ok';
+  $('out').textContent = 'Sahi hai! Ruk, dekh ke bolta hu...';
+  const line = await coach('', n);
+  const all = done.size === L.length;
+  $('out').className = 'out ok';
+  $('out').textContent = '✓ ' + (line || freshLine(FALLBACK_RIGHT))
+    + `  ${first ? '+' + got + ' points' : '(dubara solve kiya)'}  ·  Total ${P.pts}\n\n`
+    + 'Extra task: ' + L[cur].bonus + '\n\n'
+    + (all ? 'Saare 55 topics khatam. Tune poora roadmap jeet liya, bhai.' : 'Agla topic 2 second me...');
+  save();
+  buildSide();
+  if (!all) setTimeout(() => { if (cur < L.length - 1) load(cur + 1); }, 2000);
+}
+$('run').onclick = run;
+$('sol').onclick = () => { $('out').className = 'out'; $('out').textContent = L[cur].sol; };
+$('reset').onclick = () => { $('code').value = L[cur].start; saveCode(); };
+$('code').addEventListener('keydown', e => {
+  if (e.key === 'Tab'){ e.preventDefault(); const s = e.target.selectionStart;
+    e.target.setRangeText('    ', s, e.target.selectionEnd, 'end'); }
+});
+addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !$('testarea').classList.contains('hidden')){
+    e.preventDefault(); run();
+  }
+});
+
+/* fallback lines, used only when the server has no API key. Random, never
+   twice in a row, so even the offline path does not feel like a recording. */
+const FALLBACK_WRONG = [
+  'Arre bhai, ye toh galat ho gaya. Dhyan se dekh:',
+  'Nahi bhai, abhi kuch reh gaya. Chal hint le:',
+  'Thoda sa reh gaya. Isko aise nahi, waise karte hai:',
+  'Ruk ja, jaldi mat kar. Error khud sab bata raha hai:',
+  'Koi baat nahi, galti se hi seekhte hai. Ek baar aur:',
+  'Bas thoda idhar udhar ho gaya. Neeche wali baat padh:',
+  'Aa gaya paas me, par abhi nahi. Dekh kya chhoot raha hai:',
+  'Chal koi na, isko sudhaar lete hai:'
+];
+const FALLBACK_RIGHT = [
+  'Wah bhai wah, ekdum sahi.',
+  'Shabaash, nikal gaya.',
+  'Kya baat hai, mast solve kiya.',
+  'Bilkul sahi. Agla dekhte hai.',
+  'Zabardast, Python haath me aa raha hai.',
+  'Ekdum clean. Isi tarah chalta reh.',
+  'Sahi pakde hai. Ye wala pakka yaad rahega.',
+  'Bahut badhiya, pehli baar me samajh gaya.'
+];
+let lastLine = '';
+function freshLine(pool){                 // never the same line twice in a row
+  let pick = pool[Math.floor(Math.random() * pool.length)];
+  if (pool.length > 1) while (pick === lastLine) pick = pool[Math.floor(Math.random() * pool.length)];
+  lastLine = pick;
+  return pick;
 }
 
-// already logged in? resume straight from the server copy
+/* ========================================================== chat dock */
+const chat = $('chat');
+let history = [], asking = false;
+function bubble(role, text){
+  const d = document.createElement('div');
+  d.className = 'msg ' + (role === 'user' ? 'me' : role === 'sys' ? 'sys' : 'ai');
+  d.textContent = text;
+  $('msgs').append(d);
+  $('msgs').scrollTop = $('msgs').scrollHeight;
+  return d;
+}
+$('fab').onclick = () => {
+  chat.classList.toggle('open');
+  if (chat.classList.contains('open')){
+    if (!$('msgs').children.length)
+      bubble('ai', auth.token
+        ? 'Namaste! Main tumhara Python dost hu. Level ka doubt ho, error samajh na aaye, ya kuch bhi poochna ho, seedha likh do.'
+        : 'Namaste! Pehle account bana lo, fir main tumhare har sawaal ka jawab de sakta hu.');
+    $('askinput').focus();
+  }
+};
+$('chatclose').onclick = () => chat.classList.remove('open');
+$('askform').addEventListener('submit', async e => {
+  e.preventDefault();
+  const text = $('askinput').value.trim();
+  if (!text || asking) return;
+  if (!auth.token){ bubble('sys', 'Iske liye login karna padega.'); openGate(); return; }
+  $('askinput').value = '';
+  bubble('user', text);
+  history.push({ role: 'user', content: text });
+  asking = true;
+  $('asksend').disabled = true;
+  const wait = bubble('ai', '');
+  wait.className = 'msg ai typing';
+  wait.innerHTML = '<span></span><span></span><span></span>';
+  try {
+    const d = await apiCall('/api/chat', { user: auth.user, token: auth.token,
+      level: $('app').classList.contains('hidden') ? null : cur, messages: history });
+    wait.className = 'msg ai';
+    wait.textContent = d.reply;
+    history.push({ role: 'assistant', content: d.reply });
+  } catch (err) {
+    wait.className = 'msg sys';
+    wait.textContent = err.message;
+  }
+  asking = false;
+  $('asksend').disabled = false;
+  $('msgs').scrollTop = $('msgs').scrollHeight;
+});
+
+/* ========================================================== resume */
 (async () => {
-  const saved = JSON.parse(localStorage.getItem("pq_auth") || "null");
+  const saved = JSON.parse(localStorage.getItem('pq_auth') || 'null');
   if (!saved) return;
   try {
-    const d = await apiCall("/api/resume", saved);
+    const d = await apiCall('/api/resume', saved);
     auth = saved;
-    startGame(d.progress);
-  } catch {
-    localStorage.removeItem("pq_auth");   // token dead, show the login form
-  }
+    P = Object.assign(P, d.progress || {});
+    done = new Set(P.done || []);
+    $('logout').hidden = false;
+    $('start').textContent = 'Practice';
+    document.querySelectorAll('.pill').forEach(p => p.classList.toggle('done', done.has(+p.dataset.i)));
+  } catch { localStorage.removeItem('pq_auth'); }
 })();
+
+reduced.addEventListener('change', e => { if (e.matches) disableScrub(); else applyHeroMode(); });
 </script>
 </body>
 </html>
