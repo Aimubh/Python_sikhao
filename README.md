@@ -51,14 +51,14 @@ rate-limit zaroori hai.
 
 ## AI dost (chatbot)
 
-Chatbot aur "har baar nayi baat" wale messages ek Claude API key se chalte hai. Key server pe
-rehti hai, page me kabhi nahi jati:
+Chatbot aur "har baar nayi baat" wale messages ek API key se chalte hai. Key server pe rehti
+hai, page me kabhi nahi jati. **OpenAI ya Anthropic, dono chalti hai** - server key dekh ke
+khud pehchan leta hai:
 
 ```bash
 # ek file banao (git ise ignore karta hai)
-echo sk-ant-your-key-here > claude_key.txt
-# ya environment variable
-set ANTHROPIC_API_KEY=sk-ant-your-key-here
+echo sk-proj-...   > ai_key.txt     # OpenAI  -> gpt-4.1
+echo sk-ant-...    > ai_key.txt     # Anthropic -> claude-opus-5
 ```
 
 Fir server restart karo. Ab:
@@ -68,8 +68,9 @@ Fir server restart karo. Ab:
 - **Dost se poochho** button se kuch bhi poochh sakte ho. Jis level pe ho uska poora jawab wo
   nahi dega (khud solve karna hi asli baat hai), baaki har sawaal ka deta hai.
 
-Key na ho toh sab kuch chalta rehta hai: har topic ka apna likha hua hint aur bina repeat wale
-messages milte hai.
+Key na ho, ya account me credit na ho, toh site poori chalti rehti hai: har topic ka apna
+likha hua hint, aur messages jo kabhi lagatar repeat nahi hote. Dikkat kya hai wo saaf
+sentence me batata hai, JSON dump nahi.
 
 ## Files
 

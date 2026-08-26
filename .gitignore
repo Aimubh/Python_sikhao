@@ -22,3 +22,6 @@ data.txt
 # installed agent skills, not part of the project
 .claude/
 skills-lock.json
+
+# AI key stays on this machine only
+ai_key.txt

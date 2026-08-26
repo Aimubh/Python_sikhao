@@ -353,51 +353,94 @@ def api(route, body, users):
 
 
 # ---------------------------------------------------------------- the AI coach
-# The key lives here on the server, never in the page. Put it in claude_key.txt
-# (gitignored) or set ANTHROPIC_API_KEY before starting the server.
-KEYFILE = os.path.join(HERE, "claude_key.txt")
-MODEL = "claude-opus-5"
+# The key lives here on the server, never in the page. Put it in ai_key.txt
+# (gitignored), or set OPENAI_API_KEY / ANTHROPIC_API_KEY before starting.
+#
+# Two providers, picked from the key itself: sk-ant-... goes to Claude, anything
+# else goes to OpenAI. Swap the key file and the site changes brain, no code edit.
+KEYFILES = ("ai_key.txt", "claude_key.txt")
+OPENAI_MODEL = "gpt-4.1"
+CLAUDE_MODEL = "claude-opus-5"
 
 
-def claude_key():
-    key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-    if key:
-        return key
-    try:
-        with open(KEYFILE) as f:
-            return f.read().strip()
-    except OSError:
-        return ""
+def ai_key():
+    for var in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
+        key = os.environ.get(var, "").strip()
+        if key:
+            return key
+    for name in KEYFILES:
+        try:
+            with open(os.path.join(HERE, name)) as f:
+                key = f.read().strip()
+            if key:
+                return key
+        except OSError:
+            pass
+    return ""
 
 
-def claude(system, messages, max_tokens=700, effort="low"):
-    """One Messages API call. Returns the text, or raises with a plain message."""
+def friendly(code, detail):
+    """Turn a provider error into one sentence a learner can act on."""
+    low = detail.lower()
+    if code == 401:
+        return "API key galat lag rahi hai. ai_key.txt me sahi key daal ke server restart karo."
+    if code == 429 and "quota" in low:
+        return ("AI account me credit khatam hai. OpenAI pe billing add karo "
+                "(platform.openai.com/settings/organization/billing), ya ai_key.txt me "
+                "Anthropic ki sk-ant key daal do. Tab tak har topic ka apna hint chal raha hai.")
+    if code == 429:
+        return "Bahut saare sawaal ek saath chale gaye. Thodi der ruk ke fir poochho."
+    if code == 404 and "model" in low:
+        return "Ye model is account pe nahi hai. learn.py me OPENAI_MODEL badal do."
+    if code >= 500:
+        return "AI ki taraf se dikkat hai, thodi der baad try karo."
+    return f"AI ne mana kiya ({code}). {detail[:160]}"
+
+
+def post_json(url, headers, payload, timeout=60):
+    """One JSON POST. Returns the parsed body, or raises with a plain message."""
     import urllib.error
     import urllib.request
-    key = claude_key()
-    if not key:
-        raise RuntimeError("no API key: claude_key.txt banao ya ANTHROPIC_API_KEY set karo")
-    body = json.dumps({
-        "model": MODEL,
-        "max_tokens": max_tokens,
-        "output_config": {"effort": effort},
-        "system": system,
-        "messages": messages,
-    }).encode()
-    req = urllib.request.Request(
-        "https://api.anthropic.com/v1/messages", data=body, method="POST",
-        headers={"content-type": "application/json", "x-api-key": key,
-                 "anthropic-version": "2023-06-01"})
+    req = urllib.request.Request(url, data=json.dumps(payload).encode(),
+                                 method="POST", headers=headers)
     try:
-        with urllib.request.urlopen(req, timeout=60) as res:
-            data = json.load(res)
+        with urllib.request.urlopen(req, timeout=timeout) as res:
+            return json.load(res)
     except urllib.error.HTTPError as e:
-        raise RuntimeError(f"Claude ne mana kiya ({e.code}): {e.read()[:200].decode('utf-8', 'replace')}")
+        detail = e.read()[:400].decode("utf-8", "replace")
+        raise RuntimeError(friendly(e.code, detail))
     except OSError as e:
-        raise RuntimeError(f"Claude tak pahuncha nahi: {e}")
-    if data.get("stop_reason") == "refusal":
-        raise RuntimeError("Claude ne is sawaal ka jawab dene se mana kiya.")
-    return "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text").strip()
+        raise RuntimeError(f"AI tak pahuncha nahi, internet check karo: {e}")
+
+
+def ask_ai(system, messages, max_tokens=700):
+    """Ask whichever provider the key belongs to. Same in, same out."""
+    key = ai_key()
+    if not key:
+        raise RuntimeError("koi API key nahi mili: ai_key.txt banao ya OPENAI_API_KEY set karo")
+
+    if key.startswith("sk-ant-"):
+        data = post_json(
+            "https://api.anthropic.com/v1/messages",
+            {"content-type": "application/json", "x-api-key": key,
+             "anthropic-version": "2023-06-01"},
+            {"model": CLAUDE_MODEL, "max_tokens": max_tokens,
+             "output_config": {"effort": "low"},
+             "system": system, "messages": messages})
+        if data.get("stop_reason") == "refusal":
+            raise RuntimeError("AI ne is sawaal ka jawab dene se mana kiya.")
+        return "".join(b.get("text", "") for b in data.get("content", [])
+                       if b.get("type") == "text").strip()
+
+    data = post_json(
+        "https://api.openai.com/v1/chat/completions",
+        {"content-type": "application/json", "authorization": "Bearer " + key},
+        {"model": OPENAI_MODEL, "max_completion_tokens": max_tokens,
+         "messages": [{"role": "system", "content": system}] + messages})
+    choices = data.get("choices") or []
+    if not choices:
+        raise RuntimeError("AI ne khali jawab bheja.")
+    return (choices[0].get("message", {}).get("content") or "").strip()
 
 
 COACH_SYSTEM = """You are the learner's Python dost: a warm, funny Indian friend teaching them Python.
@@ -489,7 +532,7 @@ def serve(port=8777):
                     idx = body.get("level")
                     if not isinstance(idx, int) or not 0 <= idx < len(LEVELS):
                         return self.reply(400, {"error": "bad level"})
-                    text = claude(COACH_SYSTEM, [{"role": "user", "content": coach_prompt(
+                    text = ask_ai(COACH_SYSTEM, [{"role": "user", "content": coach_prompt(
                         LEVELS[idx], str(body.get("code", ""))[:4000],
                         str(body.get("err", ""))[:1000], int(body.get("tries", 1)))}],
                         max_tokens=400)
@@ -508,7 +551,7 @@ def serve(port=8777):
                                      f"(Context: main abhi level '{lv['t']}' pe hu. Task: "
                                      f"{lv['brief']} Iska poora jawab mat dena.)"})
                     clean.insert(1, {"role": "assistant", "content": "Theek hai, samajh gaya."})
-                return self.reply(200, {"reply": claude(CHAT_SYSTEM, clean, max_tokens=900)})
+                return self.reply(200, {"reply": ask_ai(CHAT_SYSTEM, clean, max_tokens=900)})
             except RuntimeError as e:
                 return self.reply(503, {"error": str(e)})
 
