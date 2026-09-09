@@ -1,12 +1,17 @@
-"""Accounts, storage and the AI coach. One copy, used by two runtimes.
+"""The whole backend: accounts, storage, and the AI coach.
 
-Locally `python learn.py --serve` imports this and keeps users in users.json.
-On Vercel the files in this folder are serverless functions, and the same code
-keeps users in Upstash Redis, because a serverless filesystem is wiped between
-requests and a file-backed account would vanish.
+One file on purpose. On Vercel this is a single Python serverless function that
+answers every /api/... call, and `python learn.py --serve` imports the same file
+locally, so the login logic exists once rather than in two copies that drift.
 
-No third-party packages on purpose: the standard library keeps cold starts fast
-and means there is no requirements.txt to drift.
+It imports nothing of our own: a lambda that needs a sibling module is a bundling
+question, and a bundling question is what broke the first deploy.
+
+Accounts live in Upstash Redis when its variables are set, and in users.json when
+they are not. A serverless filesystem is wiped between requests, so a file-backed
+account there would take signups and lose them.
+
+Standard library only: no requirements.txt to drift, and a fast cold start.
 """
 import hashlib
 import json
@@ -14,6 +19,7 @@ import os
 import secrets
 import threading
 import urllib.error
+import urllib.parse
 import urllib.request
 from http.server import BaseHTTPRequestHandler
 
@@ -344,6 +350,15 @@ def ai_route(route, body, store):
         return 503, {"error": str(e)}
 
 
+def store_ready():
+    """True when a store is reachable. Used by the health check only."""
+    try:
+        get_store()
+        return True
+    except RuntimeError:
+        return False
+
+
 def handle(route, body):
     """One entry point for both runtimes: account routes and AI routes."""
     try:
@@ -358,36 +373,50 @@ def handle(route, body):
         return account_route(route, body, store)
 
 
-def make_handler(route):
-    """Build the Vercel serverless handler class for one route."""
+ROUTES = ("/api/signup", "/api/login", "/api/resume", "/api/save",
+          "/api/coach", "/api/chat")
 
-    class Handler(BaseHTTPRequestHandler):
-        def do_POST(self):
-            try:
-                length = int(self.headers.get("content-length") or 0)
-                body = json.loads(self.rfile.read(length) or "{}")
-                assert isinstance(body, dict)
-            except (ValueError, AssertionError):
-                return self.reply(400, {"error": "bad json"})
-            try:
-                status, payload = handle(route, body)
-            except Exception as e:                    # never leak a stack trace to the page
-                status, payload = 500, {"error": "server error: %s" % e}
-            self.reply(status, payload)
 
-        def do_GET(self):
-            self.reply(405, {"error": "POST only"})
+class handler(BaseHTTPRequestHandler):
+    """Vercel's entry point. Every /api/... path is routed here by vercel.json.
 
-        def reply(self, status, payload):
-            raw = json.dumps(payload).encode()
-            self.send_response(status)
-            self.send_header("content-type", "application/json")
-            self.send_header("content-length", str(len(raw)))
-            self.send_header("cache-control", "no-store")
-            self.end_headers()
-            self.wfile.write(raw)
+    The route is read from the body first, because a rewrite can leave the
+    lambda looking at the rewritten path rather than the one the browser asked
+    for. The path is the fallback, which is what the local server uses."""
 
-        def log_message(self, *a):
-            pass
+    def do_POST(self):
+        try:
+            length = int(self.headers.get("content-length") or 0)
+            body = json.loads(self.rfile.read(length) or "{}")
+            assert isinstance(body, dict)
+        except (ValueError, AssertionError):
+            return self.reply(400, {"error": "bad json"})
 
-    return Handler
+        route = str(body.get("route") or "")
+        if route not in ROUTES:
+            route = urllib.parse.urlparse(self.path).path
+        if route not in ROUTES:
+            return self.reply(404, {"error": "no such route"})
+
+        try:
+            status, payload = handle(route, body)
+        except Exception as e:                     # never leak a stack trace to the page
+            status, payload = 500, {"error": "server error: %s" % e}
+        self.reply(status, payload)
+
+    def do_GET(self):
+        # a browser hitting the function directly should see it is alive
+        self.reply(200, {"ok": True, "routes": list(ROUTES),
+                         "database": "connected" if store_ready() else "missing"})
+
+    def reply(self, status, payload):
+        raw = json.dumps(payload).encode()
+        self.send_response(status)
+        self.send_header("content-type", "application/json")
+        self.send_header("content-length", str(len(raw)))
+        self.send_header("cache-control", "no-store")
+        self.end_headers()
+        self.wfile.write(raw)
+
+    def log_message(self, *a):
+        pass

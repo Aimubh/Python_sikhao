@@ -271,8 +271,8 @@ def dump_web():
 # that folder as serverless functions. Local dev imports the same file, so there is
 # one implementation of login rather than two that drift apart.
 sys.path.insert(0, os.path.join(HERE, "api"))
-import _shared                                     # noqa: E402
-from _shared import (COACH_SYSTEM, CHAT_SYSTEM, account_route, ai_key,  # noqa: E402,F401
+import index as _shared                            # noqa: E402,F401
+from index import (COACH_SYSTEM, CHAT_SYSTEM, account_route, ai_key,  # noqa: E402,F401
                      ask_ai, friendly, get_store, handle, pw_hash, pw_ok)
 
 USERS = os.path.join(HERE, "users.json")

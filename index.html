@@ -719,8 +719,10 @@ let P = { done: [], pts: 0, tries: {}, code: {}, track: null };
 let done = new Set(), cur = 0, py = null, pending = null;
 
 async function apiCall(route, body){
+  // route travels in the body too: on Vercel one function answers every path,
+  // and a rewrite can leave it looking at the rewritten path, not this one
   const res = await fetch(route, { method: 'POST', headers: { 'content-type': 'application/json' },
-                                   body: JSON.stringify(body) });
+                                   body: JSON.stringify({ ...body, route }) });
   const data = await res.json().catch(() => ({
     error: res.status === 404
       ? 'Login server is site pe deploy nahi hua. Vercel pe api/ folder aur database chahiye.'
