@@ -87,16 +87,83 @@ class UpstashStore:
         self._cmd("SET", "user:" + name, json.dumps(user))
 
 
+class SupabaseStore:
+    """Supabase over PostgREST, its HTTP API, so no Postgres driver is needed.
+
+    One row per account in the `users` table: name (primary key) and a jsonb
+    column holding the password hash, the device tokens and the progress. The
+    service role key is used because it bypasses row level security, and it only
+    ever lives in this function, never in the page."""
+
+    def __init__(self, url, key):
+        self.url = url.rstrip("/") + "/rest/v1/users"
+        self.head = {"apikey": key, "authorization": "Bearer " + key,
+                     "content-type": "application/json"}
+
+    def _call(self, url, method, payload=None, extra=None):
+        head = dict(self.head)
+        head.update(extra or {})
+        req = urllib.request.Request(
+            url, data=json.dumps(payload).encode() if payload is not None else None,
+            method=method, headers=head)
+        try:
+            with urllib.request.urlopen(req, timeout=20) as res:
+                raw = res.read()
+                return json.loads(raw) if raw else None
+        except urllib.error.HTTPError as e:
+            detail = e.read()[:200].decode("utf-8", "replace")
+            if "does not exist" in detail or e.code == 404:
+                raise RuntimeError(
+                    "Supabase me `users` table nahi hai. Supabase ke SQL editor me ye chalao: "
+                    "create table users (name text primary key, data jsonb not null "
+                    "default '{}'::jsonb, updated_at timestamptz not null default now());")
+            raise RuntimeError("database ne mana kiya (%s): %s" % (e.code, detail))
+        except OSError as e:
+            raise RuntimeError("database tak pahuncha nahi: %s" % e)
+
+    def get(self, name):
+        rows = self._call("%s?name=eq.%s&select=data" % (self.url, urllib.parse.quote(name)),
+                          "GET")
+        return rows[0]["data"] if rows else None
+
+    def put(self, name, user):
+        # upsert: one round trip whether the account is new or not
+        self._call(self.url, "POST", [{"name": name, "data": user}],
+                   {"prefer": "resolution=merge-duplicates,return=minimal"})
+
+
+def env_ending(*suffixes):
+    """Find a variable by what its name ends with.
+
+    Vercel's Supabase integration lets you set a prefix, so the names are not
+    fixed. Matching on the ending finds them either way."""
+    for key, value in os.environ.items():
+        if value and any(key.upper().endswith(s) for s in suffixes):
+            return value.strip()
+    return ""
+
+
 def get_store():
     """Upstash when its variables are set (Vercel), otherwise the local file."""
     url = os.environ.get("KV_REST_API_URL") or os.environ.get("UPSTASH_REDIS_REST_URL")
     token = os.environ.get("KV_REST_API_TOKEN") or os.environ.get("UPSTASH_REDIS_REST_TOKEN")
     if url and token:
         return UpstashStore(url, token)
+
+    supa_url = env_ending("SUPABASE_URL")
+    supa_key = env_ending("SERVICE_ROLE_KEY")
+    if supa_url and supa_key:
+        return SupabaseStore(supa_url, supa_key)
+    if supa_url and not supa_key:
+        raise RuntimeError(
+            "Supabase juda hai par service role key nahi mili. Vercel ke Environment "
+            "Variables me SUPABASE_SERVICE_ROLE_KEY add karo, fir redeploy karo. "
+            "Anon key se kaam nahi chalega.")
+
     if os.environ.get("VERCEL"):
         # Fail loudly. A file store here would take signups and lose them.
         raise RuntimeError(
-            "Database connected nahi hai. Vercel project me Upstash Redis add karo "
+            "Database connected nahi hai. Vercel project me Supabase ya Upstash add karo "
             "(Storage tab), fir redeploy karo.")
     return LocalStore(os.path.join(ROOT, "users.json"))
 
@@ -350,13 +417,18 @@ def ai_route(route, body, store):
         return 503, {"error": str(e)}
 
 
-def store_ready():
-    """True when a store is reachable. Used by the health check only."""
+def store_status():
+    """What the health check reports: which store, and whether it really answers."""
     try:
-        get_store()
-        return True
-    except RuntimeError:
-        return False
+        store = get_store()
+    except RuntimeError as e:
+        return {"database": "missing", "detail": str(e)}
+    kind = type(store).__name__.replace("Store", "").lower()
+    try:
+        store.get("__health__")          # a real round trip, not just configuration
+        return {"database": "connected", "kind": kind}
+    except RuntimeError as e:
+        return {"database": "error", "kind": kind, "detail": str(e)}
 
 
 def handle(route, body):
@@ -406,8 +478,9 @@ class handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         # a browser hitting the function directly should see it is alive
-        self.reply(200, {"ok": True, "routes": list(ROUTES),
-                         "database": "connected" if store_ready() else "missing"})
+        info = {"ok": True, "routes": list(ROUTES)}
+        info.update(store_status())
+        self.reply(200, info)
 
     def reply(self, status, payload):
         raw = json.dumps(payload).encode()

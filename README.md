@@ -58,8 +58,20 @@ nahi karta. Teen kadam:
 
 1. **Repo import karo** Vercel pe. Framework "Other" rakho, build command khali. Vercel `api/*.py`
    ko apne aap serverless function bana leta hai.
-2. **Database jodo**: project ka Storage tab -> Marketplace -> **Upstash Redis** -> Create.
-   Vercel khud `KV_REST_API_URL` aur `KV_REST_API_TOKEN` daal deta hai. Free tier kaafi hai.
+2. **Database jodo**: project ka Storage tab -> Create Database. Do me se koi bhi chalega:
+   - **Supabase**: connect karne ke baad Supabase ke SQL editor me ek table banao:
+     ```sql
+     create table if not exists users (
+       name text primary key,
+       data jsonb not null default '{}'::jsonb,
+       updated_at timestamptz not null default now()
+     );
+     alter table users enable row level security;
+     ```
+     Code service role key use karta hai (RLS bypass), jo sirf server pe rehti hai.
+   - **Upstash Redis**: kuch banana nahi padta, bas connect kar do.
+
+   Env variable ka naam kuch bhi ho (Vercel prefix laga sakta hai), code khud dhoondh leta hai.
 3. **AI key daalo** (optional): Settings -> Environment Variables -> `OPENAI_API_KEY`
    (ya `ANTHROPIC_API_KEY`). Iske bina site chalti hai, bas chatbot band rehta hai.
 
