@@ -721,7 +721,11 @@ let done = new Set(), cur = 0, py = null, pending = null;
 async function apiCall(route, body){
   const res = await fetch(route, { method: 'POST', headers: { 'content-type': 'application/json' },
                                    body: JSON.stringify(body) });
-  const data = await res.json().catch(() => ({ error: 'Server ne kuch ajeeb bheja.' }));
+  const data = await res.json().catch(() => ({
+    error: res.status === 404
+      ? 'Login server is site pe deploy nahi hua. Vercel pe api/ folder aur database chahiye.'
+      : 'Server ne kuch ajeeb bheja (' + res.status + ').'
+  }));
   if (!res.ok) throw new Error(data.error || ('Error ' + res.status));
   return data;
 }
@@ -880,7 +884,8 @@ function saveCode(){
 async function coach(err, tries){          // a fresh line every time, from Claude
   try {
     const d = await apiCall('/api/coach', { user: auth.user, token: auth.token,
-      level: cur, code: $('code').value, err: err || '', tries });
+      level_title: L[cur].t, level_brief: L[cur].brief,
+      code: $('code').value, err: err || '', tries });
     return d.line || null;
   } catch (e) { return null; }
 }
@@ -1008,8 +1013,10 @@ $('askform').addEventListener('submit', async e => {
   wait.className = 'msg ai typing';
   wait.innerHTML = '<span></span><span></span><span></span>';
   try {
+    const onLevel = !$('app').classList.contains('hidden') && L[cur];
     const d = await apiCall('/api/chat', { user: auth.user, token: auth.token,
-      level: $('app').classList.contains('hidden') ? null : cur, messages: history });
+      level_title: onLevel ? L[cur].t : '', level_brief: onLevel ? L[cur].brief : '',
+      messages: history });
     wait.className = 'msg ai';
     wait.textContent = d.reply;
     history.push({ role: 'assistant', content: d.reply });

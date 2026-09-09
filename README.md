@@ -49,6 +49,26 @@ aur `users.json` git me kabhi nahi jata.
 Server sirf `127.0.0.1` pe sunta hai. Internet pe daalne se pehle HTTPS aur login pe
 rate-limit zaroori hai.
 
+## Vercel pe live karna
+
+Site static hai, par login, progress aur chatbot ke liye server chahiye. Isliye `api/` folder
+me Python serverless functions hai, aur accounts Upstash Redis me jate hai. Vercel ka
+filesystem har request ke baad reset ho jata hai, isliye wahan file me account save karna kaam
+nahi karta. Teen kadam:
+
+1. **Repo import karo** Vercel pe. Framework "Other" rakho, build command khali. Vercel `api/*.py`
+   ko apne aap serverless function bana leta hai.
+2. **Database jodo**: project ka Storage tab -> Marketplace -> **Upstash Redis** -> Create.
+   Vercel khud `KV_REST_API_URL` aur `KV_REST_API_TOKEN` daal deta hai. Free tier kaafi hai.
+3. **AI key daalo** (optional): Settings -> Environment Variables -> `OPENAI_API_KEY`
+   (ya `ANTHROPIC_API_KEY`). Iske bina site chalti hai, bas chatbot band rehta hai.
+
+Fir Redeploy. Database na jude toh login saaf-saaf batata hai ki database missing hai, chup
+chaap signup lekar data pheknta nahi.
+
+Local pe kuch nahi badalta: `python learn.py --serve` wahi `api/_shared.py` import karta hai
+aur `users.json` me save karta hai, taki login ka code do jagah alag-alag na ho jaye.
+
 ## AI dost (chatbot)
 
 Chatbot aur "har baar nayi baat" wale messages ek API key se chalte hai. Key server pe rehti
@@ -78,4 +98,7 @@ sentence me batata hai, JSON dump nahi.
 - `curriculum.py` + `curriculum_extra.py` — saare 55 topics: lesson, example, test, hint, bonus.
 - `index.html` — website: hero, roadmap, practice app, chatbot. Plain HTML, CSS, JS.
 - `levels.js` — `python learn.py --web` se banta hai. Topic badlo toh ye command dubara chalao.
+- `api/` — Vercel serverless functions. `_shared.py` me accounts, storage aur AI,
+  baaki chhoti files har route ke liye. Local server bhi yahi import karta hai.
+- `vercel.json` — deploy settings.
 - `assets/` — og image.
