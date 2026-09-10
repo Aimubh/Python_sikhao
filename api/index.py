@@ -194,8 +194,11 @@ def get_store():
     if url and token:
         return UpstashStore(url, token)
 
-    supa_url = env_ending("SUPABASE_URL")
-    supa_key = supabase_secret()
+    # Exact names win over suffix matching. With two Supabase projects connected
+    # (one from the Vercel integration, one your own), guessing by suffix could
+    # pair one project's URL with the other's key.
+    supa_url = os.environ.get("SUPABASE_URL", "").strip() or env_ending("SUPABASE_URL")
+    supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip() or supabase_secret()
     if supa_url and supa_key:
         return SupabaseStore(supa_url, supa_key)
     if supa_url and not supa_key and os.environ.get("VERCEL"):
