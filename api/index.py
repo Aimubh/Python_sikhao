@@ -143,6 +143,24 @@ def env_ending(*suffixes):
     return ""
 
 
+def supabase_secret():
+    """The key that may write. Supabase renamed these, so both spellings count.
+
+    The publishable key is deliberately ignored: it is public by design and row
+    level security blocks it, so accepting it would only fail later and look
+    like a bug in login."""
+    for key, value in os.environ.items():
+        v = (value or "").strip()
+        if not v or v.startswith(("sb_publishable_", "sb_public_")):
+            continue
+        if v.startswith("sb_secret_"):
+            return v
+        if key.upper().endswith(("SERVICE_ROLE_KEY", "SUPABASE_SECRET_KEY",
+                                 "SUPABASE_SECRET", "SUPABASE_SERVICE_KEY")):
+            return v
+    return ""
+
+
 def get_store():
     """Upstash when its variables are set (Vercel), otherwise the local file."""
     url = os.environ.get("KV_REST_API_URL") or os.environ.get("UPSTASH_REDIS_REST_URL")
@@ -151,14 +169,15 @@ def get_store():
         return UpstashStore(url, token)
 
     supa_url = env_ending("SUPABASE_URL")
-    supa_key = env_ending("SERVICE_ROLE_KEY")
+    supa_key = supabase_secret()
     if supa_url and supa_key:
         return SupabaseStore(supa_url, supa_key)
     if supa_url and not supa_key:
         raise RuntimeError(
-            "Supabase juda hai par service role key nahi mili. Vercel ke Environment "
-            "Variables me SUPABASE_SERVICE_ROLE_KEY add karo, fir redeploy karo. "
-            "Anon key se kaam nahi chalega.")
+            "Supabase juda hai par sirf publishable key mili, jo users table ko chhu nahi "
+            "sakti (row level security). Supabase -> Project Settings -> API Keys se "
+            "secret key lo (sb_secret_... ya service_role) aur Vercel ke Environment "
+            "Variables me SUPABASE_SERVICE_ROLE_KEY naam se daal ke redeploy karo.")
 
     if os.environ.get("VERCEL"):
         # Fail loudly. A file store here would take signups and lose them.
