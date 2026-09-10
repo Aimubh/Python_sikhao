@@ -26,6 +26,32 @@ from http.server import BaseHTTPRequestHandler
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 
+def load_dotenv():
+    """Read ROOT/.env into the environment, for local runs.
+
+    Real environment variables always win, so this never overrides what Vercel
+    sets in production. Vercel does not read this file at all: variables there
+    live in the project settings.
+    """
+    path = os.path.join(ROOT, ".env")
+    try:
+        with open(path, encoding="utf-8") as f:
+            lines = f.readlines()
+    except OSError:
+        return
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key, value = key.strip(), value.strip().strip('"').strip("'")
+        if key and value and key not in os.environ:
+            os.environ[key] = value
+
+
+load_dotenv()
+
+
 # ---------------------------------------------------------------- storage
 # Two stores, same two methods. get_store() picks by what the environment has.
 
@@ -172,7 +198,9 @@ def get_store():
     supa_key = supabase_secret()
     if supa_url and supa_key:
         return SupabaseStore(supa_url, supa_key)
-    if supa_url and not supa_key:
+    if supa_url and not supa_key and os.environ.get("VERCEL"):
+        # only fatal in production. Locally a half-filled .env should still let
+        # the site run on users.json rather than refusing to start.
         raise RuntimeError(
             "Supabase juda hai par sirf publishable key mili, jo users table ko chhu nahi "
             "sakti (row level security). Supabase -> Project Settings -> API Keys se "

@@ -25,3 +25,7 @@ skills-lock.json
 
 # AI key stays on this machine only
 ai_key.txt
+
+# keys for local runs, never committed
+.env
+.env.local
