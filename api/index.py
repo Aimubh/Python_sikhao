@@ -197,18 +197,19 @@ def get_store():
     # Exact names win over suffix matching. With two Supabase projects connected
     # (one from the Vercel integration, one your own), guessing by suffix could
     # pair one project's URL with the other's key.
-    supa_url = os.environ.get("SUPABASE_URL", "").strip() or env_ending("SUPABASE_URL")
+    supa_url = (os.environ.get("SUPABASE_URL", "").strip()
+                or env_ending("SUPABASE_URL") or DEFAULT_SUPABASE_URL)
     supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip() or supabase_secret()
     if supa_url and supa_key:
         return SupabaseStore(supa_url, supa_key)
-    if supa_url and not supa_key and os.environ.get("VERCEL"):
-        # only fatal in production. Locally a half-filled .env should still let
-        # the site run on users.json rather than refusing to start.
+    if not supa_key and os.environ.get("VERCEL"):
+        # only fatal in production. Locally a missing key should still let the
+        # site run on users.json rather than refusing to start.
         raise RuntimeError(
-            "Supabase juda hai par sirf publishable key mili, jo users table ko chhu nahi "
-            "sakti (row level security). Supabase -> Project Settings -> API Keys se "
-            "secret key lo (sb_secret_... ya service_role) aur Vercel ke Environment "
-            "Variables me SUPABASE_SERVICE_ROLE_KEY naam se daal ke redeploy karo.")
+            "SUPABASE_SERVICE_ROLE_KEY set nahi hai. Vercel -> Settings -> Environment "
+            "Variables me wo daalo (Supabase -> Project Settings -> API Keys -> Secret "
+            "keys, sb_secret_... wali), fir redeploy karo. Publishable key kaam nahi "
+            "karegi, row level security use rokti hai.")
 
     if os.environ.get("VERCEL"):
         # Fail loudly. A file store here would take signups and lose them.
@@ -314,6 +315,10 @@ def account_route(route, body, store):
 # ---------------------------------------------------------------- the AI coach
 # The key never reaches the page. Locally it sits in ai_key.txt; on Vercel it is
 # an environment variable. The key's own shape picks the provider.
+# The project this repo deploys against. Not a secret: a Supabase URL is public
+# by design. Override it with SUPABASE_URL to point a deploy somewhere else.
+DEFAULT_SUPABASE_URL = "https://njlsejgdtjtbqbljwhyq.supabase.co"
+
 KEYFILES = ("ai_key.txt", "claude_key.txt")
 OPENAI_MODEL = "gpt-4.1"
 CLAUDE_MODEL = "claude-opus-5"

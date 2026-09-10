@@ -10,5 +10,8 @@
     { "src": "/api/(.*)", "dest": "/api/index.py" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
-  ]
+  ],
+  "env": {
+    "SUPABASE_URL": "https://njlsejgdtjtbqbljwhyq.supabase.co"
+  }
 }

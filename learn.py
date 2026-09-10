@@ -325,6 +325,18 @@ def demo():
         assert err is None, f"{lv['t']}: {err}"
         # a lesson that just hands over the answer isn't teaching, it's cheating
         assert lv["example"].strip() and lv["example"] != lv["sol"], f"{lv['t']}: lesson == answer"
+    # .env.example is committed, so a real key in it would be published. This
+    # caught a live OpenAI key once; the guard stays.
+    tpl = os.path.join(HERE, ".env.example")
+    if os.path.exists(tpl):
+        for line in io.open(tpl, encoding="utf-8"):
+            if "=" not in line or line.strip().startswith("#"):
+                continue
+            name, value = line.split("=", 1)
+            value = value.strip()
+            leaky = value.startswith(("sk-", "sb_secret_", "eyJ")) or "postgresql://" in value
+            assert not (leaky and len(value) > 25),                 ".env.example holds a real secret on %s, move it to .env" % name.strip()
+
     # beginner track must not need a function before the level that teaches functions
     for lv in LEVELS[:ORDER.index("Functions")]:
         assert "def " not in lv["sol"] + lv["start"], f"{lv['t']} needs def before it's taught"

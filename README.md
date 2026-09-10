@@ -51,35 +51,28 @@ rate-limit zaroori hai.
 
 ## Vercel pe live karna
 
-Site static hai, par login, progress aur chatbot ke liye server chahiye. Isliye `api/` folder
-me Python serverless functions hai, aur accounts Upstash Redis me jate hai. Vercel ka
-filesystem har request ke baad reset ho jata hai, isliye wahan file me account save karna kaam
-nahi karta. Teen kadam:
+Site static hai, par login, progress aur chatbot ke liye server chahiye. `api/index.py` ek
+Python serverless function hai jo saare `/api/...` calls sambhalta hai, aur accounts Supabase
+me jate hai. Vercel ka filesystem har request ke baad reset ho jata hai, isliye wahan file me
+account save karna kaam nahi karta.
 
-1. **Repo import karo** Vercel pe. Framework "Other" rakho, build command khali. Vercel `api/*.py`
-   ko apne aap serverless function bana leta hai.
-2. **Database jodo**: project ka Storage tab -> Create Database. Do me se koi bhi chalega:
-   - **Supabase**: connect karne ke baad Supabase ke SQL editor me ek table banao:
-     ```sql
-     create table if not exists users (
-       name text primary key,
-       data jsonb not null default '{}'::jsonb,
-       updated_at timestamptz not null default now()
-     );
-     alter table users enable row level security;
-     ```
-     Code service role key use karta hai (RLS bypass), jo sirf server pe rehti hai.
-   - **Upstash Redis**: kuch banana nahi padta, bas connect kar do.
+Database ka pata (`SUPABASE_URL`) `vercel.json` me hai aur code me bhi default hai, kyunki wo
+secret nahi hota. Sirf **ek** cheez daalni padti hai:
 
-   Env variable ka naam kuch bhi ho (Vercel prefix laga sakta hai), code khud dhoondh leta hai.
-3. **AI key daalo** (optional): Settings -> Environment Variables -> `OPENAI_API_KEY`
-   (ya `ANTHROPIC_API_KEY`). Iske bina site chalti hai, bas chatbot band rehta hai.
+1. **Repo import karo** Vercel pe. Framework "Other", build command khali. `vercel.json` khud
+   bata deta hai ki kya build karna hai.
+2. **Secret key daalo**: Settings -> Environment Variables -> `SUPABASE_SERVICE_ROLE_KEY`.
+   Value Supabase -> Project Settings -> API Keys -> Secret keys (`sb_secret_...`) se aati hai.
+   Publishable key se kaam nahi chalega, RLS use rokti hai.
+3. **Table banao** (project ke naye hone pe ek hi baar): Supabase SQL editor me
+   `supabase/schema.sql` chala do.
+4. Optional, chatbot ke liye: `OPENAI_API_KEY` ya `ANTHROPIC_API_KEY`.
 
-Fir Redeploy. Database na jude toh login saaf-saaf batata hai ki database missing hai, chup
-chaap signup lekar data pheknta nahi.
+Deploy ke baad `/api/health` khud bata deta hai ki database juda hai ya nahi, aur kya missing
+hai. Key na ho toh login saaf mana kar deta hai, chup chaap signup lekar data pheknta nahi.
 
-Local pe kuch nahi badalta: `python learn.py --serve` wahi `api/_shared.py` import karta hai
-aur `users.json` me save karta hai, taki login ka code do jagah alag-alag na ho jaye.
+Local pe: `.env` me wahi do cheezein daal do (`.env.example` dekho). Key na ho toh local
+`users.json` use karta hai, isliye bina database ke bhi sab chalta rehta hai.
 
 ## AI dost (chatbot)
 
@@ -110,7 +103,8 @@ sentence me batata hai, JSON dump nahi.
 - `curriculum.py` + `curriculum_extra.py` — saare 55 topics: lesson, example, test, hint, bonus.
 - `index.html` — website: hero, roadmap, practice app, chatbot. Plain HTML, CSS, JS.
 - `levels.js` — `python learn.py --web` se banta hai. Topic badlo toh ye command dubara chalao.
-- `api/` — Vercel serverless functions. `_shared.py` me accounts, storage aur AI,
-  baaki chhoti files har route ke liye. Local server bhi yahi import karta hai.
-- `vercel.json` — deploy settings.
+- `api/index.py` — poora backend: accounts, storage (Supabase/Upstash/file), AI routes.
+  Local server bhi yahi file import karta hai, taki logic ek hi jagah rahe.
+- `vercel.json` — deploy settings aur database ka pata.
+- `supabase/schema.sql` — ek baar chalane wala table setup.
 - `assets/` — og image.
