@@ -21,16 +21,16 @@ window.LEVELS = [
   "t": "Hello, variables",
   "ch": "basics",
   "kind": "code",
-  "brief": "Make `name` the string 'Ada' and `age` the number 36.",
+  "brief": "`name` me apna naam daalo (text) aur `age` me apni umar (number). Koi bhi naam chalega, type sahi hona chahiye.",
   "start": "name = ?\nage = ?\n",
   "tests": [
    [
-    "name",
-    "'Ada'"
+    "isinstance(name, str) and name.strip() != ''",
+    "True"
    ],
    [
-    "age",
-    "36"
+    "isinstance(age, int) and not isinstance(age, bool)",
+    "True"
    ]
   ],
   "sol": "name = 'Ada'\nage = 36",
@@ -47,28 +47,28 @@ window.LEVELS = [
   "start": "a = 7\nb = 2\njod = ?\nghata = ?\nguna = ?\nbhaag = ?    # / hamesha decimal deta hai\nbacha = ?    # % matlab bhaag ke baad jo bacha\nghaat = ?    # ** matlab power\n",
   "tests": [
    [
-    "jod",
-    "9"
+    "jod == a + b",
+    "True"
    ],
    [
-    "ghata",
-    "5"
+    "ghata == a - b",
+    "True"
    ],
    [
-    "guna",
-    "14"
+    "guna == a * b",
+    "True"
    ],
    [
-    "bhaag",
-    "3.5"
+    "bhaag == a / b",
+    "True"
    ],
    [
-    "bacha",
-    "1"
+    "bacha == a % b",
+    "True"
    ],
    [
-    "ghaat",
-    "49"
+    "ghaat == a ** b",
+    "True"
    ]
   ],
   "sol": "a = 7\nb = 2\njod = a + b\nghata = a - b\nguna = a * b\nbhaag = a / b\nbacha = a % b\nghaat = a ** b",
@@ -115,8 +115,8 @@ window.LEVELS = [
   "start": "raw = '  MiXeD Case  '\nclean = ?\n",
   "tests": [
    [
-    "clean",
-    "'mixed case'"
+    "clean == raw.strip().lower()",
+    "True"
    ]
   ],
   "sol": "raw = '  MiXeD Case  '\nclean = raw.strip().lower()",
@@ -133,8 +133,8 @@ window.LEVELS = [
   "start": "naam = 'Riya'\nmarks = 92\nline = ?\n",
   "tests": [
    [
-    "line",
-    "'Riya ke 92 marks aaye'"
+    "line == f'{naam} ke {marks} marks aaye'",
+    "True"
    ]
   ],
   "sol": "naam = 'Riya'\nmarks = 92\nline = f'{naam} ke {marks} marks aaye'",
@@ -151,20 +151,20 @@ window.LEVELS = [
   "start": "age = 20\nmarks = 45\nadult = ?\npaas = ?\ndono = ?     # and use karo\nfail = ?     # not use karo\n",
   "tests": [
    [
-    "adult",
+    "adult == (age >= 18)",
     "True"
    ],
    [
-    "paas",
+    "paas == (marks > 33)",
     "True"
    ],
    [
-    "dono",
+    "dono == (adult and paas)",
     "True"
    ],
    [
-    "fail",
-    "False"
+    "fail == (not paas)",
+    "True"
    ]
   ],
   "sol": "age = 20\nmarks = 45\nadult = age >= 18\npaas = marks > 33\ndono = adult and paas\nfail = not paas",
@@ -211,12 +211,12 @@ window.LEVELS = [
   "start": "score = 76\nif ?:\n    grade = ?\n\ntemp = 45\nif ?:\n    mausam = ?\n",
   "tests": [
    [
-    "grade",
-    "'C'"
+    "grade == ('A' if score >= 90 else 'B' if score >= 80 else 'C' if score >= 70 else 'F')",
+    "True"
    ],
    [
-    "mausam",
-    "'Garmi'"
+    "mausam == ('Garmi' if temp > 40 else 'Theek')",
+    "True"
    ]
   ],
   "sol": "score = 76\nif score >= 90:\n    grade = 'A'\nelif score >= 80:\n    grade = 'B'\nelif score >= 70:\n    grade = 'C'\nelse:\n    grade = 'F'\n\ntemp = 45\nif temp > 40:\n    mausam = 'Garmi'\nelse:\n    mausam = 'Theek'",
@@ -281,16 +281,16 @@ window.LEVELS = [
   "start": "s = 'namaste'\npehle_teen = ?\naakhri_do = ?\nulta = ?\n",
   "tests": [
    [
-    "pehle_teen",
-    "'nam'"
+    "pehle_teen == s[:3]",
+    "True"
    ],
    [
-    "aakhri_do",
-    "'te'"
+    "aakhri_do == s[-2:]",
+    "True"
    ],
    [
-    "ulta",
-    "'etsaman'"
+    "ulta == s[::-1]",
+    "True"
    ]
   ],
   "sol": "s = 'namaste'\npehle_teen = s[:3]\naakhri_do = s[-2:]\nulta = s[::-1]",
@@ -1355,4 +1355,4 @@ window.TRACKS = [{"id": "beginner", "name": "Beginner - kabhi Python nahi chhua"
 window.SCOLD = ["Arre bhai, ye toh galat ho gaya. Ek baar dhyan se dekh:", "Nahi bhai, abhi bhi kuch gadbad hai. Chal hint le:", "Bhai tu kar sakta hai - isko aise nahi, waise karte hai:", "Ruk ja bhai, jaldi mat kar. Error khud sab bata raha hai:", "Koi baat nahi bhai, galti se hi seekhte hai. Fir se try kar:"];
 window.CHEER = ["Wah bhai wah! Ekdum sahi.", "Shabaash! Level nikal gaya.", "Kya baat hai bhai, mast solve kiya.", "Bilkul sahi bhai - agla level chalu.", "Zabardast! Python tere haath me aa raha hai."];
 window.REVEAL = 10;
-window.CHECK_SRC = "def check(level, src):\n    \"\"\"Run src, then every test. Returns None on pass, else a failure message.\"\"\"\n    ns = {}\n    out = io.StringIO()\n    try:\n        with contextlib.redirect_stdout(out):\n            exec(compile(src, \"work.py\", \"exec\"), ns)\n    except Exception:\n        # limit=-1: deepest frame, i.e. the user's line, not this checker's exec call\n        return \"your code crashed:\\n\" + traceback.format_exc(limit=-1).strip()\n    ns[\"__out__\"] = out.getvalue()\n\n    def drive(coro):\n        \"\"\"Run a coroutine that never really blocks. asyncio.run() is unusable in\n        the browser (Pyodide already owns the event loop), so step it by hand.\"\"\"\n        try:\n            coro.send(None)\n        except StopIteration as stop:\n            return stop.value\n        raise RuntimeError(\"coroutine awaited something that blocks\")\n\n    ns[\"drive\"] = drive\n\n    def raises(fn, exc):\n        \"\"\"True if calling fn() raises exc. Lets a test check error handling.\"\"\"\n        try:\n            fn()\n        except exc:\n            return True\n        except Exception:\n            return False\n        return False\n\n    ns[\"raises\"] = raises\n    for expr, want in level[\"tests\"]:\n        try:\n            got = eval(expr, ns)\n        except Exception as e:\n            return f\"{expr}  ->  raised {type(e).__name__}: {e}\"\n        if got != want:\n            return f\"{expr}  ->  got {got!r}, expected {want!r}\"\n    return None\n";
+window.CHECK_SRC = "def check(level, src):\n    \"\"\"Run src, then every test. Returns None on pass, else a failure message.\"\"\"\n    ns = {}\n    out = io.StringIO()\n    try:\n        with contextlib.redirect_stdout(out):\n            exec(compile(src, \"work.py\", \"exec\"), ns)\n    except Exception:\n        # limit=-1: deepest frame, i.e. the user's line, not this checker's exec call\n        return \"your code crashed:\\n\" + traceback.format_exc(limit=-1).strip()\n    ns[\"__out__\"] = out.getvalue()\n\n    def drive(coro):\n        \"\"\"Run a coroutine that never really blocks. asyncio.run() is unusable in\n        the browser (Pyodide already owns the event loop), so step it by hand.\"\"\"\n        try:\n            coro.send(None)\n        except StopIteration as stop:\n            return stop.value\n        raise RuntimeError(\"coroutine awaited something that blocks\")\n\n    ns[\"drive\"] = drive\n\n    def raises(fn, exc):\n        \"\"\"True if calling fn() raises exc. Lets a test check error handling.\"\"\"\n        try:\n            fn()\n        except exc:\n            return True\n        except Exception:\n            return False\n        return False\n\n    ns[\"raises\"] = raises\n    for expr, want in level[\"tests\"]:\n        try:\n            got = eval(expr, ns)\n        except Exception as e:\n            return f\"{expr}  ->  raised {type(e).__name__}: {e}\"\n        if got != want:\n            # a relational test reads as \"got False, expected True\", which tells a\n            # learner nothing. Show the condition that did not hold instead.\n            if want is True:\n                return f\"ye shart puri nahi hui:  {expr}\"\n            return f\"{expr}  ->  got {got!r}, expected {want!r}\"\n    return None\n";

@@ -149,6 +149,10 @@ def check(level, src):
         except Exception as e:
             return f"{expr}  ->  raised {type(e).__name__}: {e}"
         if got != want:
+            # a relational test reads as "got False, expected True", which tells a
+            # learner nothing. Show the condition that did not hold instead.
+            if want is True:
+                return f"ye shart puri nahi hui:  {expr}"
             return f"{expr}  ->  got {got!r}, expected {want!r}"
     return None
 
@@ -341,7 +345,9 @@ def demo():
     for lv in LEVELS[:ORDER.index("Functions")]:
         assert "def " not in lv["sol"] + lv["start"], f"{lv['t']} needs def before it's taught"
     assert LEVELS[0]["t"] == "Printing", "beginner must start at print"
-    assert check(LEVELS[1], "name = 'Bob'\nage = 36") is not None, "checker too lenient"
+    # any name is fine now: the type is the lesson, not the name I happened to pick
+    assert check(LEVELS[1], "name = 'Bob'\nage = 36") is None, "own name should pass"
+    assert check(LEVELS[1], "name = 5\nage = 36") is not None, "a number is not a name"
     assert check(LEVELS[0], "1/0") is not None, "crash not caught"
 
     class FakeStore:                 # the account logic, with no disk and no network
