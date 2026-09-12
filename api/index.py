@@ -323,9 +323,16 @@ KEYFILES = ("ai_key.txt", "claude_key.txt")
 OPENAI_MODEL = "gpt-4.1"
 CLAUDE_MODEL = "claude-opus-5"
 
+# OpenRouter serves many models behind the OpenAI request shape, some of them
+# free. Picked by running this site's own coach prompt through every free model:
+# the first answered in Hinglish and named the learner's exact mistake, the
+# second is the backup, and the rest either leaked their private reasoning,
+# returned an empty answer, or were rate limited.
+OPENROUTER_MODELS = ("nex-agi/nex-n2.5-pro:free", "inclusionai/ling-3.0-flash-vl:free")
+
 
 def ai_key():
-    for var in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
+    for var in ("OPENROUTER_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
         key = os.environ.get(var, "").strip()
         if key:
             return key
@@ -369,6 +376,19 @@ def post_json(url, headers, payload, timeout=60):
         raise RuntimeError("AI tak pahuncha nahi, internet check karo: %s" % e)
 
 
+def tidy(text):
+    """Strip the markdown the prompt asked them not to use.
+
+    Smaller models slip back into ** bold ** and code fences however plainly the
+    system prompt forbids it, and the page renders plain text, so the marks would
+    show up as literal asterisks in front of a learner.
+    """
+    text = (text or "").strip()
+    if "```" in text:
+        text = text.replace("```python", "").replace("```", "")
+    return text.replace("**", "").replace("__", "").strip()
+
+
 def ask_ai(system, messages, max_tokens=700):
     key = ai_key()
     if not key:
@@ -386,15 +406,40 @@ def ask_ai(system, messages, max_tokens=700):
         return "".join(b.get("text", "") for b in data.get("content", [])
                        if b.get("type") == "text").strip()
 
+    chat = [{"role": "system", "content": system}] + messages
+
+    if key.startswith("sk-or-"):
+        # Free models go busy or answer empty now and then, so walk the list.
+        # AI_MODEL overrides it, including with a paid model.
+        wanted = os.environ.get("AI_MODEL", "").strip()
+        models = [wanted] if wanted else list(OPENROUTER_MODELS)
+        last = ""
+        for model in models:
+            try:
+                data = post_json(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    {"content-type": "application/json", "authorization": "Bearer " + key,
+                     "http-referer": "https://github.com/Aimubh/Python_sikhao",
+                     "x-title": "Python Sikhlo"},
+                    {"model": model, "max_tokens": max_tokens, "messages": chat})
+            except RuntimeError as e:
+                last = str(e)
+                continue
+            text = tidy((data.get("choices") or [{}])[0].get("message", {}).get("content") or "")
+            if text:
+                return text
+            last = "%s ne khali jawab bheja." % model
+        raise RuntimeError(last or "koi free model jawab nahi de paya, thodi der baad try karo")
+
     data = post_json(
         "https://api.openai.com/v1/chat/completions",
         {"content-type": "application/json", "authorization": "Bearer " + key},
-        {"model": OPENAI_MODEL, "max_completion_tokens": max_tokens,
-         "messages": [{"role": "system", "content": system}] + messages})
+        {"model": os.environ.get("AI_MODEL", "").strip() or OPENAI_MODEL,
+         "max_completion_tokens": max_tokens, "messages": chat})
     choices = data.get("choices") or []
     if not choices:
         raise RuntimeError("AI ne khali jawab bheja.")
-    return (choices[0].get("message", {}).get("content") or "").strip()
+    return tidy(choices[0].get("message", {}).get("content") or "")
 
 
 COACH_SYSTEM = """You are the learner's Python dost: a warm, funny Indian friend teaching them Python.

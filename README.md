@@ -77,25 +77,30 @@ Local pe: `.env` me wahi do cheezein daal do (`.env.example` dekho). Key na ho t
 ## AI dost (chatbot)
 
 Chatbot aur "har baar nayi baat" wale messages ek API key se chalte hai. Key server pe rehti
-hai, page me kabhi nahi jati. **OpenAI ya Anthropic, dono chalti hai** - server key dekh ke
-khud pehchan leta hai:
+hai, page me kabhi nahi jati. Teen providers chalte hai, aur key ka shape dekh ke khud chunta hai:
 
-```bash
-# ek file banao (git ise ignore karta hai)
-echo sk-proj-...   > ai_key.txt     # OpenAI  -> gpt-4.1
-echo sk-ant-...    > ai_key.txt     # Anthropic -> claude-opus-5
-```
+| Key | Kahan jata hai | Kharcha |
+|---|---|---|
+| `sk-or-...` | OpenRouter, free models | free |
+| `sk-proj-...` | OpenAI, gpt-4.1 | paid |
+| `sk-ant-...` | Anthropic, claude-opus-5 | paid |
 
-Fir server restart karo. Ab:
+Local: `.env` me `OPENROUTER_API_KEY=sk-or-...` daalo. Vercel: wahi naam Environment
+Variables me. `AI_MODEL` se model badal sakte ho.
+
+Free models pe do model try hote hai (`nex-agi/nex-n2.5-pro:free`, fir
+`inclusionai/ling-3.0-flash-vl:free`), kyunki free wale kabhi busy hote hai ya khali jawab
+bhejte hai. Ye dono is site ke apne coach prompt pe test karke chune gaye hai.
+
+Ab:
 
 - **Galat jawab pe** tumhara code padh ke us waqt likha gaya hint milta hai, rata hua nahi.
 - **Sahi jawab pe** us solution ke hisaab se nayi shabaashi milti hai.
 - **Dost se poochho** button se kuch bhi poochh sakte ho. Jis level pe ho uska poora jawab wo
-  nahi dega (khud solve karna hi asli baat hai), baaki har sawaal ka deta hai.
+  nahi dega, blanks wala structure de dega.
 
-Key na ho, ya account me credit na ho, toh site poori chalti rehti hai: har topic ka apna
-likha hua hint, aur messages jo kabhi lagatar repeat nahi hote. Dikkat kya hai wo saaf
-sentence me batata hai, JSON dump nahi.
+Key na ho toh site poori chalti rehti hai: har topic ka apna likha hua hint, aur messages jo
+kabhi lagatar repeat nahi hote.
 
 ## Files
 
