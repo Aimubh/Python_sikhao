@@ -4,7 +4,7 @@ Run:  python learn.py
 Each level writes a task into work.py. Edit it in your editor, save,
 then press Enter here to check it.
 """
-import contextlib, io, json, os, sys, threading, traceback
+import contextlib, io, json, os, re, sys, threading, traceback
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 WORK = os.path.join(HERE, "work.py")
@@ -267,7 +267,17 @@ def dump_web():
                    json.dumps([{"id": c, "name": n, "desc": d} for c, n, d in CHAPTERS]),
                    json.dumps(TRACKS), json.dumps(SCOLD), json.dumps(CHEER), REVEAL,
                    json.dumps(inspect.getsource(check))))
-    print("wrote levels.js")
+    # Stamp the page with a fingerprint of the data it needs. Without this the
+    # browser happily keeps yesterday's levels.js and the learner sees an old
+    # task failing against old tests, with no way to tell why.
+    import hashlib
+    stamp = hashlib.md5(open(os.path.join(HERE, "levels.js"), "rb").read()).hexdigest()[:8]
+    page_path = os.path.join(HERE, "index.html")
+    page = open(page_path, encoding="utf-8").read()
+    page = re.sub(r'<script src="levels\.js(\?v=[0-9a-f]+)?">',
+                  '<script src="levels.js?v=%s">' % stamp, page, count=1)
+    open(page_path, "w", encoding="utf-8").write(page)
+    print("wrote levels.js (page stamped v=%s)" % stamp)
 
 
 # ---------------------------------------------------------------- accounts + server
