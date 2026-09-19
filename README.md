@@ -10,6 +10,7 @@ sawaal ka jawab deta hai.
 ## Chalao
 
 ```bash
+npm run dev                  # same as the line below, if you are used to npm
 python learn.py --serve      # website  ->  http://localhost:8777/index.html
 python learn.py              # terminal version (work.py edit karo, Enter dabao)
 python learn.py --test       # self-check: har topic, har lesson, accounts API

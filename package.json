@@ -1,0 +1,11 @@
+{
+  "name": "python-sikhlo",
+  "private": true,
+  "description": "npm aliases for the Python commands, so `npm run dev` works. There are no npm dependencies.",
+  "scripts": {
+    "dev": "python -u learn.py --serve",
+    "test": "python learn.py --test",
+    "levels": "python learn.py --web",
+    "game": "python learn.py"
+  }
+}
