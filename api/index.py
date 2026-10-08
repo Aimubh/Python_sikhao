@@ -17,6 +17,7 @@ import hashlib
 import json
 import os
 import secrets
+import sys
 import threading
 import urllib.error
 import urllib.parse
@@ -197,12 +198,11 @@ def get_store():
     # Exact names win over suffix matching. With two Supabase projects connected
     # (one from the Vercel integration, one your own), guessing by suffix could
     # pair one project's URL with the other's key.
-    supa_url = (os.environ.get("SUPABASE_URL", "").strip()
-                or env_ending("SUPABASE_URL") or DEFAULT_SUPABASE_URL)
+    supa_url = os.environ.get("SUPABASE_URL", "").strip() or env_ending("SUPABASE_URL")
     supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip() or supabase_secret()
     if supa_url and supa_key:
         return SupabaseStore(supa_url, supa_key)
-    if not supa_key and os.environ.get("VERCEL"):
+    if supa_url and not supa_key and os.environ.get("VERCEL"):
         # only fatal in production. Locally a missing key should still let the
         # site run on users.json rather than refusing to start.
         raise RuntimeError(
@@ -315,10 +315,6 @@ def account_route(route, body, store):
 # ---------------------------------------------------------------- the AI coach
 # The key never reaches the page. Locally it sits in ai_key.txt; on Vercel it is
 # an environment variable. The key's own shape picks the provider.
-# The project this repo deploys against. Not a secret: a Supabase URL is public
-# by design. Override it with SUPABASE_URL to point a deploy somewhere else.
-DEFAULT_SUPABASE_URL = "https://njlsejgdtjtbqbljwhyq.supabase.co"
-
 KEYFILES = ("ai_key.txt", "claude_key.txt")
 OPENAI_MODEL = "gpt-4.1"
 CLAUDE_MODEL = "claude-opus-5"
@@ -531,18 +527,31 @@ def store_status():
         return {"database": "error", "kind": kind, "detail": str(e)}
 
 
-def handle(route, body):
-    """One entry point for both runtimes: account routes and AI routes."""
-    try:
-        store = get_store()
-    except RuntimeError as e:
-        return 503, {"error": str(e)}
+def dispatch(route, body, store):
     if route in ("/api/coach", "/api/chat"):
         return ai_route(route, body, store)
     if route in ("/api/save", "/api/resume"):
         return account_route(route, body, store)
     with getattr(store, "LOCK", threading.Lock()):   # local file needs the lock; Upstash does not
         return account_route(route, body, store)
+
+
+def handle(route, body):
+    """One entry point for both runtimes: account routes and AI routes."""
+    try:
+        store = get_store()
+    except RuntimeError as e:
+        return 503, {"error": str(e)}
+    try:
+        return dispatch(route, body, store)
+    except RuntimeError as e:
+        # The remote database went away: paused, deleted, or no network. On Vercel
+        # that has to be fatal, because a file store there accepts signups and then
+        # loses them. Locally, fall back to the file so the site keeps working.
+        if os.environ.get("VERCEL") or isinstance(store, LocalStore):
+            return 503, {"error": str(e)}
+        sys.stderr.write("database reachable nahi hai, users.json pe chal raha hu: %s\n" % e)
+        return dispatch(route, body, LocalStore(os.path.join(ROOT, "users.json")))
 
 
 ROUTES = ("/api/signup", "/api/login", "/api/resume", "/api/save",
