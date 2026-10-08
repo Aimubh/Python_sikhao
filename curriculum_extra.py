@@ -9,9 +9,10 @@ EXTRA = [
     # ---------------------------------------------------------------- basics
     dict(
         t="Comments & docstrings", ch="functions", kind="code",
-        brief="Ek function `greet` banao jo 'Namaste' de, aur uske andar docstring likho: Namaste bolta hai.",
+        brief="Ek function `greet` banao jo koi bhi string return kare, aur uske andar docstring likho (teen quotes wali line). Likha kuch bhi ho sakta hai.",
         start='def greet():\n    """?"""\n    return ?\n',
-        tests=[("greet()", "Namaste"), ("greet.__doc__.strip()", "Namaste bolta hai.")],
+        tests=[("uses('docstring', 'greet')", True),
+               ("isinstance(greet(), str) and greet().strip() != ''", True)],
         sol='def greet():\n    """Namaste bolta hai."""\n    return \'Namaste\'',
         hint="# se ek line ka comment banta hai. Function ke andar pehli line me teen quotes wala "
              "text docstring kehlata hai, aur wo greet.__doc__ me milta hai.",
@@ -106,10 +107,10 @@ EXTRA = [
     ),
     dict(
         t="Nested loops & patterns", ch="basics", kind="code",
-        brief="Do loop laga ke `pattern` banao: pehli line me 1 star, fir 2, fir 3, fir 4, har line "
-              "ke baad nayi line.",
+        brief="Do loop laga ke `pattern` banao: pehli line me 1 nishan, fir 2, fir 3, fir 4, har line ke baad nayi line. Nishan koi bhi ho, * ya # ya kuch aur.",
         start="pattern = ''\nfor i in range(1, 5):\n    ?\n",
-        tests=[("pattern", "*\n**\n***\n****\n"), ("pattern.count('*')", 10)],
+        tests=[("uses('for')", True),
+               ('[len(l) for l in pattern.splitlines() if l] == [1, 2, 3, 4]', True)],
         sol="pattern = ''\nfor i in range(1, 5):\n"
             "    for j in range(i):\n        pattern = pattern + '*'\n"
             "    pattern = pattern + '\\n'",

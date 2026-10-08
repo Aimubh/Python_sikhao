@@ -6,9 +6,9 @@
 TOPICS = [
     dict(
         t='Printing', ch='basics', kind='code',
-        brief='Print exactly: Hello, World!',
+        brief="print() se kuch bhi chhapo: apna naam, koi message, kuch bhi. Bas print sahi likha hona chahiye.",
         start='',
-        tests=[('__out__', 'Hello, World!\n')],
+        tests=[("uses('print')", True), ("__out__.strip() != ''", True)],
         sol="print('Hello, World!')",
         hint="print() ke andar bilkul wahi text daal - spelling, comma aur ! sab same: print('Hello, World!')",
         bonus='Bonus: do print lines likh ke dekh output kaise alag alag line me aata hai.',

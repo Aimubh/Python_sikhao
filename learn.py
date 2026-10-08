@@ -4,7 +4,7 @@ Run:  python learn.py
 Each level writes a task into work.py. Edit it in your editor, save,
 then press Enter here to check it.
 """
-import contextlib, io, json, os, re, sys, threading, traceback
+import ast, contextlib, io, json, os, re, sys, threading, traceback
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 WORK = os.path.join(HERE, "work.py")
@@ -143,6 +143,83 @@ def check(level, src):
         return False
 
     ns["raises"] = raises
+
+    tree = ast.parse(src)
+
+    def uses(what, name=None):
+        """True if the code CONTAINS this construct. A syntax test, not a value test.
+
+        Lets a task say "you must use a loop" without dictating which numbers go
+        in it, so two different correct programs both pass.
+        """
+        what = what.lower()
+        for node in ast.walk(tree):
+            if what in ("def", "function"):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and (
+                        name is None or node.name == name):
+                    return True
+            elif what == "class":
+                if isinstance(node, ast.ClassDef) and (name is None or node.name == name):
+                    return True
+            elif what in ("call", "print"):
+                wanted = "print" if what == "print" else name
+                if isinstance(node, ast.Call):
+                    f = node.func
+                    got = getattr(f, "id", None) or getattr(f, "attr", None)
+                    if wanted is None or got == wanted:
+                        return True
+            elif what == "import":
+                if isinstance(node, ast.Import) and (
+                        name is None or any(a.name.split(".")[0] == name for a in node.names)):
+                    return True
+                if isinstance(node, ast.ImportFrom) and (name is None or node.module == name):
+                    return True
+            elif what == "for":
+                if isinstance(node, (ast.For, ast.AsyncFor)):
+                    return True
+            elif what == "while":
+                if isinstance(node, ast.While):
+                    return True
+            elif what == "loop":
+                if isinstance(node, (ast.For, ast.AsyncFor, ast.While)):
+                    return True
+            elif what == "if":
+                if isinstance(node, ast.If) or isinstance(node, ast.IfExp):
+                    return True
+            elif what == "lambda":
+                if isinstance(node, ast.Lambda):
+                    return True
+            elif what in ("fstring", "f-string"):
+                if isinstance(node, ast.JoinedStr):
+                    return True
+            elif what == "comprehension":
+                if isinstance(node, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
+                    return True
+            elif what == "try":
+                if isinstance(node, ast.Try):
+                    return True
+            elif what == "with":
+                if isinstance(node, (ast.With, ast.AsyncWith)):
+                    return True
+            elif what == "yield":
+                if isinstance(node, (ast.Yield, ast.YieldFrom)):
+                    return True
+            elif what == "break":
+                if isinstance(node, ast.Break):
+                    return True
+            elif what == "continue":
+                if isinstance(node, ast.Continue):
+                    return True
+            elif what == "assert":
+                if isinstance(node, ast.Assert):
+                    return True
+            elif what == "docstring":
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and (
+                        name is None or node.name == name) and ast.get_docstring(node):
+                    return True
+        return False
+
+    ns["uses"] = uses
     for expr, want in level["tests"]:
         try:
             got = eval(expr, ns)
@@ -152,6 +229,12 @@ def check(level, src):
             # a relational test reads as "got False, expected True", which tells a
             # learner nothing. Show the condition that did not hold instead.
             if want is True:
+                m = re.fullmatch(r"uses\('([a-z-]+)'(?:, '([^']+)')?\)", expr.strip())
+                if m:
+                    what, where = m.group(1), m.group(2)
+                    if where:
+                        return f"`{where}` me {what} nahi mila"
+                    return f"tumhare code me {what} use hi nahi hua"
                 return f"ye shart puri nahi hui:  {expr}"
             return f"{expr}  ->  got {got!r}, expected {want!r}"
     return None

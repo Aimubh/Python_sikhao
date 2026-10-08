@@ -3,12 +3,16 @@ window.LEVELS = [
   "t": "Printing",
   "ch": "basics",
   "kind": "code",
-  "brief": "Print exactly: Hello, World!",
+  "brief": "print() se kuch bhi chhapo: apna naam, koi message, kuch bhi. Bas print sahi likha hona chahiye.",
   "start": "",
   "tests": [
    [
-    "__out__",
-    "'Hello, World!\\n'"
+    "uses('print')",
+    "True"
+   ],
+   [
+    "__out__.strip() != ''",
+    "True"
    ]
   ],
   "sol": "print('Hello, World!')",
@@ -365,16 +369,16 @@ window.LEVELS = [
   "t": "Nested loops & patterns",
   "ch": "basics",
   "kind": "code",
-  "brief": "Do loop laga ke `pattern` banao: pehli line me 1 star, fir 2, fir 3, fir 4, har line ke baad nayi line.",
+  "brief": "Do loop laga ke `pattern` banao: pehli line me 1 nishan, fir 2, fir 3, fir 4, har line ke baad nayi line. Nishan koi bhi ho, * ya # ya kuch aur.",
   "start": "pattern = ''\nfor i in range(1, 5):\n    ?\n",
   "tests": [
    [
-    "pattern",
-    "'*\\n**\\n***\\n****\\n'"
+    "uses('for')",
+    "True"
    ],
    [
-    "pattern.count('*')",
-    "10"
+    "[len(l) for l in pattern.splitlines() if l] == [1, 2, 3, 4]",
+    "True"
    ]
   ],
   "sol": "pattern = ''\nfor i in range(1, 5):\n    for j in range(i):\n        pattern = pattern + '*'\n    pattern = pattern + '\\n'",
@@ -507,16 +511,16 @@ window.LEVELS = [
   "t": "Comments & docstrings",
   "ch": "functions",
   "kind": "code",
-  "brief": "Ek function `greet` banao jo 'Namaste' de, aur uske andar docstring likho: Namaste bolta hai.",
+  "brief": "Ek function `greet` banao jo koi bhi string return kare, aur uske andar docstring likho (teen quotes wali line). Likha kuch bhi ho sakta hai.",
   "start": "def greet():\n    \"\"\"?\"\"\"\n    return ?\n",
   "tests": [
    [
-    "greet()",
-    "'Namaste'"
+    "uses('docstring', 'greet')",
+    "True"
    ],
    [
-    "greet.__doc__.strip()",
-    "'Namaste bolta hai.'"
+    "isinstance(greet(), str) and greet().strip() != ''",
+    "True"
    ]
   ],
   "sol": "def greet():\n    \"\"\"Namaste bolta hai.\"\"\"\n    return 'Namaste'",
@@ -1355,4 +1359,4 @@ window.TRACKS = [{"id": "beginner", "name": "Beginner - kabhi Python nahi chhua"
 window.SCOLD = ["Arre bhai, ye toh galat ho gaya. Ek baar dhyan se dekh:", "Nahi bhai, abhi bhi kuch gadbad hai. Chal hint le:", "Bhai tu kar sakta hai - isko aise nahi, waise karte hai:", "Ruk ja bhai, jaldi mat kar. Error khud sab bata raha hai:", "Koi baat nahi bhai, galti se hi seekhte hai. Fir se try kar:"];
 window.CHEER = ["Wah bhai wah! Ekdum sahi.", "Shabaash! Level nikal gaya.", "Kya baat hai bhai, mast solve kiya.", "Bilkul sahi bhai - agla level chalu.", "Zabardast! Python tere haath me aa raha hai."];
 window.REVEAL = 10;
-window.CHECK_SRC = "def check(level, src):\n    \"\"\"Run src, then every test. Returns None on pass, else a failure message.\"\"\"\n    ns = {}\n    out = io.StringIO()\n    try:\n        with contextlib.redirect_stdout(out):\n            exec(compile(src, \"work.py\", \"exec\"), ns)\n    except Exception:\n        # limit=-1: deepest frame, i.e. the user's line, not this checker's exec call\n        return \"your code crashed:\\n\" + traceback.format_exc(limit=-1).strip()\n    ns[\"__out__\"] = out.getvalue()\n\n    def drive(coro):\n        \"\"\"Run a coroutine that never really blocks. asyncio.run() is unusable in\n        the browser (Pyodide already owns the event loop), so step it by hand.\"\"\"\n        try:\n            coro.send(None)\n        except StopIteration as stop:\n            return stop.value\n        raise RuntimeError(\"coroutine awaited something that blocks\")\n\n    ns[\"drive\"] = drive\n\n    def raises(fn, exc):\n        \"\"\"True if calling fn() raises exc. Lets a test check error handling.\"\"\"\n        try:\n            fn()\n        except exc:\n            return True\n        except Exception:\n            return False\n        return False\n\n    ns[\"raises\"] = raises\n    for expr, want in level[\"tests\"]:\n        try:\n            got = eval(expr, ns)\n        except Exception as e:\n            return f\"{expr}  ->  raised {type(e).__name__}: {e}\"\n        if got != want:\n            # a relational test reads as \"got False, expected True\", which tells a\n            # learner nothing. Show the condition that did not hold instead.\n            if want is True:\n                return f\"ye shart puri nahi hui:  {expr}\"\n            return f\"{expr}  ->  got {got!r}, expected {want!r}\"\n    return None\n";
+window.CHECK_SRC = "def check(level, src):\n    \"\"\"Run src, then every test. Returns None on pass, else a failure message.\"\"\"\n    ns = {}\n    out = io.StringIO()\n    try:\n        with contextlib.redirect_stdout(out):\n            exec(compile(src, \"work.py\", \"exec\"), ns)\n    except Exception:\n        # limit=-1: deepest frame, i.e. the user's line, not this checker's exec call\n        return \"your code crashed:\\n\" + traceback.format_exc(limit=-1).strip()\n    ns[\"__out__\"] = out.getvalue()\n\n    def drive(coro):\n        \"\"\"Run a coroutine that never really blocks. asyncio.run() is unusable in\n        the browser (Pyodide already owns the event loop), so step it by hand.\"\"\"\n        try:\n            coro.send(None)\n        except StopIteration as stop:\n            return stop.value\n        raise RuntimeError(\"coroutine awaited something that blocks\")\n\n    ns[\"drive\"] = drive\n\n    def raises(fn, exc):\n        \"\"\"True if calling fn() raises exc. Lets a test check error handling.\"\"\"\n        try:\n            fn()\n        except exc:\n            return True\n        except Exception:\n            return False\n        return False\n\n    ns[\"raises\"] = raises\n\n    tree = ast.parse(src)\n\n    def uses(what, name=None):\n        \"\"\"True if the code CONTAINS this construct. A syntax test, not a value test.\n\n        Lets a task say \"you must use a loop\" without dictating which numbers go\n        in it, so two different correct programs both pass.\n        \"\"\"\n        what = what.lower()\n        for node in ast.walk(tree):\n            if what in (\"def\", \"function\"):\n                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and (\n                        name is None or node.name == name):\n                    return True\n            elif what == \"class\":\n                if isinstance(node, ast.ClassDef) and (name is None or node.name == name):\n                    return True\n            elif what in (\"call\", \"print\"):\n                wanted = \"print\" if what == \"print\" else name\n                if isinstance(node, ast.Call):\n                    f = node.func\n                    got = getattr(f, \"id\", None) or getattr(f, \"attr\", None)\n                    if wanted is None or got == wanted:\n                        return True\n            elif what == \"import\":\n                if isinstance(node, ast.Import) and (\n                        name is None or any(a.name.split(\".\")[0] == name for a in node.names)):\n                    return True\n                if isinstance(node, ast.ImportFrom) and (name is None or node.module == name):\n                    return True\n            elif what == \"for\":\n                if isinstance(node, (ast.For, ast.AsyncFor)):\n                    return True\n            elif what == \"while\":\n                if isinstance(node, ast.While):\n                    return True\n            elif what == \"loop\":\n                if isinstance(node, (ast.For, ast.AsyncFor, ast.While)):\n                    return True\n            elif what == \"if\":\n                if isinstance(node, ast.If) or isinstance(node, ast.IfExp):\n                    return True\n            elif what == \"lambda\":\n                if isinstance(node, ast.Lambda):\n                    return True\n            elif what in (\"fstring\", \"f-string\"):\n                if isinstance(node, ast.JoinedStr):\n                    return True\n            elif what == \"comprehension\":\n                if isinstance(node, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):\n                    return True\n            elif what == \"try\":\n                if isinstance(node, ast.Try):\n                    return True\n            elif what == \"with\":\n                if isinstance(node, (ast.With, ast.AsyncWith)):\n                    return True\n            elif what == \"yield\":\n                if isinstance(node, (ast.Yield, ast.YieldFrom)):\n                    return True\n            elif what == \"break\":\n                if isinstance(node, ast.Break):\n                    return True\n            elif what == \"continue\":\n                if isinstance(node, ast.Continue):\n                    return True\n            elif what == \"assert\":\n                if isinstance(node, ast.Assert):\n                    return True\n            elif what == \"docstring\":\n                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and (\n                        name is None or node.name == name) and ast.get_docstring(node):\n                    return True\n        return False\n\n    ns[\"uses\"] = uses\n    for expr, want in level[\"tests\"]:\n        try:\n            got = eval(expr, ns)\n        except Exception as e:\n            return f\"{expr}  ->  raised {type(e).__name__}: {e}\"\n        if got != want:\n            # a relational test reads as \"got False, expected True\", which tells a\n            # learner nothing. Show the condition that did not hold instead.\n            if want is True:\n                m = re.fullmatch(r\"uses\\('([a-z-]+)'(?:, '([^']+)')?\\)\", expr.strip())\n                if m:\n                    what, where = m.group(1), m.group(2)\n                    if where:\n                        return f\"`{where}` me {what} nahi mila\"\n                    return f\"tumhare code me {what} use hi nahi hua\"\n                return f\"ye shart puri nahi hui:  {expr}\"\n            return f\"{expr}  ->  got {got!r}, expected {want!r}\"\n    return None\n";
